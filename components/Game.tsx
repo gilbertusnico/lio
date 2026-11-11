@@ -130,7 +130,7 @@ export default function Game() {
               letter={L} game={game} mini3={mini3} round={round}
               bubble={bubble} pose={pose} musicOn={musicOn}
               onSay={say} onPose={setPose} onGameDone={gameDone}
-              onBack={goMap} onRetry={() => startGame(game)} onToggleMusic={toggleMusic}
+              onBack={goMap} onRetry={() => startGame(game)} onJump={(g) => { if (g < game) startGame(g); }} onToggleMusic={toggleMusic}
             />
           </motion.div>
         )}

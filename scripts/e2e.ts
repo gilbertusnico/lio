@@ -67,6 +67,23 @@ async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<v
   await traceGlyph(page, upper, ID);
   await page.waitForTimeout(1100);
   await shot(`${ch}-3-kecil`);
+  // Keluar garis saat menebalkan huruf kecil: tetap di huruf kecil, kapital tidak diulang
+  const lp = layout(upper, lower).lower, l0 = lower.strokes[0][0];
+  const lx = r.x + r.width * (PADR + ((lp.ox + l0[0]) / 100) * (1 - 2 * PADR)), ly = r.y + r.height * (PADR + ((lp.oy + l0[1]) / 100) * (1 - 2 * PADR));
+  const dotsLower = await page.locator("#dots .dot").count();
+  if (dotsLower !== lower.strokes.length) throw new Error(`${ch}: belum masuk huruf kecil`);
+  await page.mouse.move(lx, ly);
+  await page.mouse.down();
+  await page.mouse.move(r.x + 6, r.y + 6, { steps: 4 });
+  await page.mouse.up();
+  if (!(await page.locator("#card.shake").count())) throw new Error(`${ch}: papan tidak goyang di huruf kecil`);
+  await page.waitForTimeout(500);
+  if ((await page.locator("#bubble").textContent())?.includes("tebalkan huruf")) throw new Error(`${ch}: kembali ke kapital setelah keluar garis`);
+  // Ulangi saat di huruf kecil mengulang huruf kecil saja
+  await page.locator("#btnRetry").click({ force: true });
+  await page.waitForTimeout(400);
+  const say = (await page.locator("#bubble").textContent()) || "";
+  if (!say.includes(`${lo} kecil`)) throw new Error(`${ch}: Ulangi tidak mengulang huruf kecil ("${say}")`);
   await traceGlyph(page, lower, layout(upper, lower).lower);
   await page.waitForTimeout(1500);
   await shot(`${ch}-4-berdua`);
@@ -74,6 +91,17 @@ async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<v
   // Mini-game 2: cari huruf
   await page.locator(".qgrid").waitFor({ timeout: 6000 });
   await page.waitForTimeout(300);
+  // Ketuk ikon langkah 1 (✅) → main tebalkan huruf lagi, lalu selesaikan lagi
+  if (ch === letters[0]) {
+    await page.locator("#steps .step").nth(0).click({ force: true });
+    await page.locator("#board").waitFor();
+    await page.waitForTimeout(400);
+    await traceGlyph(page, upper, ID);
+    await page.waitForTimeout(1100);
+    await traceGlyph(page, lower, layout(upper, lower).lower);
+    await page.locator(".qgrid").waitFor({ timeout: 6000 });
+    await page.waitForTimeout(300);
+  }
   const cells = await page.locator(".qb").allTextContents();
   if (cells.length !== 9) throw new Error(`${ch}: gelembung ${cells.length}, harusnya 9`);
   const nUp = cells.filter((c) => c === ch).length, nLo = cells.filter((c) => c === lo).length;

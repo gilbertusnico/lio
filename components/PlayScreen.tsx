@@ -23,6 +23,8 @@ type Props = {
   onGameDone: () => void;
   onBack: () => void;
   onRetry: () => void;
+  /** Ketuk ikon langkah yang sudah selesai (✅) untuk memainkan mini-game itu lagi. */
+  onJump: (game: number) => void;
   onToggleMusic: () => void;
 };
 
@@ -38,7 +40,10 @@ export default function PlayScreen(p: Props) {
   const word = L.word === "Lio" ? "Lio" : L.word.toLowerCase();
   const [size, setSize] = useState(320);
   const [strokes, setStrokes] = useState({ total: 0, done: 0 });
-  const [shake, setShake] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+  // Tombol Ulangi di mini-game 1 mengulang bentuk yang sedang ditebalkan (kapital ATAU kecil), bukan dari awal.
+  const [trace, setTrace] = useState({ round: -1, lower: false, n: 0 });
+  const tr = trace.round === p.round ? trace : { round: p.round, lower: false, n: 0 };
   const said = useRef(-1);
 
   useEffect(() => {
@@ -78,12 +83,21 @@ export default function PlayScreen(p: Props) {
       </div>
       <div className="steps" id="steps">
         {steps.map((icon, i) => (
-          <div key={i} className={`step${i < game ? " done" : ""}${i === game ? " on" : ""}`}>{i < game ? "✅" : icon}</div>
+          <button
+            key={i}
+            className={`step${i < game ? " done" : ""}${i === game ? " on" : ""}`}
+            disabled={i >= game}
+            onClick={() => p.onJump(i)}
+            aria-label={i < game ? `Main lagi langkah ${i + 1}` : `Langkah ${i + 1}`}
+          >
+            {i < game ? "✅" : icon}
+          </button>
         ))}
       </div>
       <div
-        key={`shake${shake}`}
-        className={`card${game > 0 ? " q" : ""}${shake ? " shake" : ""}`}
+        ref={cardRef}
+        onAnimationEnd={(e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove("shake"); }}
+        className={`card${game > 0 ? " q" : ""}`}
         id="card"
         style={{ ["--s" as string]: size + "px" }}
       >
@@ -91,9 +105,15 @@ export default function PlayScreen(p: Props) {
         {game < 2 && <Critter key={`c${p.round}`} letter={L} pose={p.pose.name} n={p.pose.n} />}
         {game === 0 ? (
           <TraceBoard
-            key={p.round} letter={L} size={size}
+            key={`${p.round}-${tr.n}`} letter={L} size={size}
+            startLower={tr.lower} onLower={() => setTrace({ ...tr, lower: true })}
             onDone={p.onGameDone} onSay={p.onSay} onPose={p.onPose}
-            onOops={() => { setShake((s) => s + 1); p.onPose("sedih"); }}
+            onOops={() => {
+              // Papan goyang tanpa membuat ulang papan, supaya goresan yang sudah jadi tidak hilang.
+              const el = cardRef.current;
+              if (el) { el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
+              p.onPose("sedih");
+            }}
             onStrokes={setStrokes}
           />
         ) : (
@@ -113,7 +133,15 @@ export default function PlayScreen(p: Props) {
         <LioTalk pose={p.pose.name} n={p.pose.n} />
         <div className="bubble" id="bubble">{p.bubble}</div>
       </div>
-      <div className="row"><button className="btn ghost" id="btnRetry" onClick={p.onRetry}>↺ Ulangi</button></div>
+      <div className="row"><button
+          className="btn ghost" id="btnRetry"
+          onClick={() => {
+            if (game === 0 && tr.lower) { setTrace({ ...tr, n: tr.n + 1 }); p.onPose("menunjuk"); }
+            else p.onRetry();
+          }}
+        >
+          ↺ Ulangi
+        </button></div>
     </section>
   );
 }

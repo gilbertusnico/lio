@@ -23,6 +23,10 @@ type Props = {
   /** Keluar garis: papan goyang + Lio sedih (diurus induk). */
   onOops: () => void;
   onStrokes: (info: { total: number; done: number }) => void;
+  /** Mulai langsung dari huruf kecil (dipakai tombol Ulangi saat anak sudah sampai huruf kecil). */
+  startLower?: boolean;
+  /** Dipanggil saat anak mulai menebalkan huruf kecil. */
+  onLower?: () => void;
 };
 
 type Phase = "upper" | "toLower" | "lower" | "toBoth" | "both";
@@ -38,12 +42,12 @@ const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
 const mix = (a: Pose, b: Pose, k: number): Pose => ({ s: lerp(a.s, b.s, k), ox: lerp(a.ox, b.ox, k), oy: lerp(a.oy, b.oy, k) });
 const ease = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 
-export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops, onStrokes }: Props) {
+export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops, onStrokes, startLower = false, onLower }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const cb = useRef({ onDone, onSay, onPose, onOops, onStrokes });
+  const cb = useRef({ onDone, onSay, onPose, onOops, onStrokes, onLower });
   const sizeRef = useRef(size);
   useEffect(() => {
-    cb.current = { onDone, onSay, onPose, onOops, onStrokes };
+    cb.current = { onDone, onSay, onPose, onOops, onStrokes, onLower };
     sizeRef.current = size;
   });
 
@@ -54,7 +58,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     const color = letter.color;
-    const st = { phase: "upper" as Phase, stroke: 0, prog: 0, drawing: false, lastOops: 0, t0: 0 };
+    const st = { phase: (startLower ? "lower" : "upper") as Phase, stroke: 0, prog: 0, drawing: false, lastOops: 0, t0: 0 };
     const sparks: Spark[] = [];
     const timers: ReturnType<typeof setTimeout>[] = [];
     const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms));
@@ -68,7 +72,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       cb.current.onStrokes({ total: g.strokes.length, done: st.phase === "upper" || st.phase === "lower" ? st.stroke : g.strokes.length });
     };
 
-    cb.current.onSay(`Ayo tebalkan huruf ${letter.ch}! Mulai dari titik nomor satu ya.`);
+    cb.current.onSay(startLower ? `Ayo tebalkan ${lower.ch} kecil! Mulai dari titik nomor satu ya.` : `Ayo tebalkan huruf ${letter.ch}! Mulai dari titik nomor satu ya.`);
     report();
 
     /* ---------- koordinat ---------- */
@@ -117,6 +121,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
         cb.current.onSay(`Hebat! Itu ${letter.ch} besar. Sekarang ${lower.ch} kecil!`);
         later(() => {
           st.phase = "lower";
+          cb.current.onLower?.();
           st.stroke = 0;
           st.prog = 0;
           report();
@@ -333,7 +338,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       canvas.removeEventListener("pointercancel", stop);
       canvas.removeEventListener("lostpointercapture", stop);
     };
-  }, [letter, upper, lower, lay]);
+  }, [letter, upper, lower, lay, startLower]);
 
   return <canvas id="board" ref={canvasRef} style={{ width: size, height: size }} aria-label={`Papan menebalkan huruf ${letter.ch}`} />;
 }

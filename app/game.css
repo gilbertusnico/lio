@@ -50,3 +50,9 @@ img.big-emoji { width: clamp(88px, 26vw, 120px); height: clamp(88px, 26vw, 120px
 
 /* Judul mini-game tetap satu baris di HP kecil */
 #play .title { font-size: clamp(16px, 4.7vw, 28px); line-height: 1.15; }
+
+/* Ikon langkah: yang sudah selesai (✅) bisa diketuk untuk main lagi */
+button.step { border: 0; padding: 0; font-family: inherit; color: inherit; }
+button.step.done { cursor: pointer; box-shadow: 0 3px 0 #b5dcbb; }
+button.step.done:active { transform: translateY(2px); box-shadow: 0 1px 0 #b5dcbb; }
+button.step:disabled { cursor: default; }

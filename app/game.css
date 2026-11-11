@@ -47,3 +47,6 @@ img.big-emoji { width: clamp(88px, 26vw, 120px); height: clamp(88px, 26vw, 120px
 @media (prefers-reduced-motion: reduce) {
   .critter, .critter .cw, .critter .cr, .critter img.ce { animation: none !important; }
 }
+
+/* Judul mini-game tetap satu baris di HP kecil */
+#play .title { font-size: clamp(16px, 4.7vw, 28px); line-height: 1.15; }

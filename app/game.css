@@ -1,0 +1,49 @@
+/* Gaya tambahan versi Next.js (di atas app/legacy.css yang dipindah dari prototipe). */
+html, body { font-family: var(--font-ui); touch-action: manipulation; }
+h1, h2, h3 { font-weight: 800; }
+img { -webkit-user-drag: none; }
+button { font-family: inherit; }
+
+/* Huruf belajar memakai font tulisan tangan (a satu tangkai, g ekor kait) */
+.qb, .tile, .intro-letter { font-family: var(--font-letter); font-weight: 700; }
+.qb { font-size: calc(var(--s) * .16); line-height: 1; display: flex; align-items: center; justify-content: center; }
+.tile { display: flex; align-items: center; justify-content: center; line-height: 1; }
+.intro-letter { font-size: clamp(64px, 20vw, 92px); white-space: nowrap; }
+img.big-emoji { width: clamp(88px, 26vw, 120px); height: clamp(88px, 26vw, 120px); object-fit: contain; }
+.panel h3.intro-word { font-size: clamp(28px, 8vw, 38px); }
+#map .grid { align-content: start; }
+
+/* Hewan di atas papan: gambar, bukan emoji teks */
+.critter { top: -52px; }
+.critter img.ce { width: 56px; height: 56px; object-fit: contain; font-size: 0; }
+.critter img.ce.float { animation: critFloat 1.6s ease-in-out infinite alternate; }
+.critter .cr { transform-origin: 50% 100%; }
+.critter .cr.hop { animation: critHop .65s cubic-bezier(.3,1.6,.5,1); }
+.critter .cr.shake { animation: critShake .5s; }
+@keyframes critFloat { from { transform: translateY(2px) rotate(-4deg); } to { transform: translateY(-12px) rotate(4deg); } }
+
+/* Kupu-kupu di cover */
+.butterfly img { width: 34px; height: 34px; }
+
+/* Papan tracing */
+#board { border-radius: 18px; }
+
+/* Hitung benda */
+.qitem img { width: calc(var(--s) * .22); height: calc(var(--s) * .22); object-fit: contain; pointer-events: none; }
+.qitem { font-size: 0; }
+.qitem:active { transform: scale(.94); }
+
+/* Cocokkan bayangan */
+.shadow-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 45%, #fff8d6 0%, #fff 70%); border-radius: 22px; }
+.shadow-img { height: 86%; max-width: 86%; object-fit: contain; filter: brightness(0); opacity: .82;
+  transition: filter .5s ease, opacity .5s ease, transform .5s cubic-bezier(.2,1.6,.4,1); }
+.shadow-img.reveal { filter: none; opacity: 1; transform: scale(1.08); }
+.shadow-opts { gap: calc(var(--s) * .035); }
+.qopt.shadow-opt { width: calc(var(--s) * .29); height: calc(var(--s) * .29); padding: calc(var(--s) * .025); display: flex; align-items: center; justify-content: center; }
+.shadow-opt img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.shadow-opt.right { box-shadow: 0 0 0 4px #ffc93c, 0 6px 0 #cfd8e3; }
+
+@media (prefers-reduced-motion: reduce) {
+  .critter, .critter .cw, .critter .cr, .critter img.ce { animation: none !important; }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "lio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "tsx --test tests/*.test.ts",
+    "sheet": "tsx scripts/contact-sheet.ts",
+    "animals": "node scripts/build-animals.mjs",
+    "e2e": "tsx scripts/e2e.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/grandstander": "^5.3.0",
+    "@fontsource/andika": "^5.3.0",
+    "motion": "^14.12.0",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@iconify-json/noto": "^1.2.10",
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "sharp": "^0.35.5",
+    "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5"
+  }
+}

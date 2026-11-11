@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+:root {
+  /* Font UI: Grandstander. Font huruf belajar: Andika (a satu tangkai, g ekor kait, l berekor). */
+  --font-ui: "Grandstander Variable", "Andika", system-ui, sans-serif;
+  --font-letter: "Andika", "Grandstander Variable", system-ui, sans-serif;
+}
+
+@theme inline {
+  --font-sans: var(--font-ui);
+  --font-letter: var(--font-letter);
+  --color-ink: #1d4a2b;
+}

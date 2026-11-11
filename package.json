@@ -10,7 +10,8 @@
     "test": "tsx --test tests/*.test.ts",
     "sheet": "tsx scripts/contact-sheet.ts",
     "animals": "node scripts/build-animals.mjs",
-    "e2e": "tsx scripts/e2e.ts"
+    "e2e": "tsx scripts/e2e.ts",
+    "icons": "node scripts/build-icons.mjs"
   },
   "dependencies": {
     "@fontsource-variable/grandstander": "^5.3.0",

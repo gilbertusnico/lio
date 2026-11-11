@@ -179,3 +179,27 @@ Isi prototipe:
 - `prototype/index.html`: prototipe HTML terakhir (sama dengan artifact v14: https://claude.ai/artifact/JAg61UWr7kGKhEnowDSNwF). Berisi logika tracing, Mesin B, cover, animasi; dipakai sebagai acuan saat memindahkan ke Next.js. Masih memakai emoji bawaan dan bentuk huruf kapital saja.
 - `assets/lio/`: 8 pose Lio (WebP transparan). `assets/animals/`: quokka, xerus, yak (gaya Noto). `assets/refs/`: referensi gaya.
 - Belum ada kode Next.js. Pemilik bilang "mulai dev" untuk memulai. Model boleh berganti (Fable/Opus/Sonnet) di tengah jalan: commit & push sering.
+
+## 6. URUTAN KERJA & PEMBAGIAN MODEL (diputuskan 11 Nov 2026)
+**Aturan**: kerjakan dari atas ke bawah. Tiap butir selesai: tes, **commit + push**, lalu centang `[x]` di sini (ini penanda posisi kalau model berganti di tengah jalan). Fable lebih dulu mengerjakan bagian SULIT (kuota Fable terbatas); sisanya boleh dilanjutkan Opus. Jangan mulai dev sebelum pemilik bilang "mulai dev".
+
+### Tahap 1: bagian sulit (Fable)
+- [ ] 1. Kerangka Next.js (App Router, TS) + Tailwind + Motion, struktur **berbasis data** (satu file konfigurasi 26 huruf: bentuk huruf, hewan, pengecoh). Pindahkan aset dari `assets/` ke `public/`. Deploy statis (jangan urus Vercel).
+- [ ] 2. **Engine tracing React** (client component, canvas): papan bergaris buku tulis SD; alur kapital → mengecil ke kiri → huruf kecil; logika `prog/TOL/OFF/LOOK` dari `prototype/index.html`; keluar garis = papan goyang + Lio sedih (tetap).
+- [ ] 3. **Data goresan 49 bentuk baru**: kapital D–Z (23) + kecil a–z (26, bentuk tulisan tangan: a satu tangkai, g ekor kait). Urutan goresan benar dan arah benar. **Wajib diverifikasi otomatis**: tes yang menelusuri tiap polyline dan memastikan huruf selesai, plus screenshot kontak-sheet semua huruf untuk dicek mata.
+- [ ] 4. **Mini-game 2** (cari kapital + kecil, pasangan berwarna sama) dan **mini-game 3 random** (hitung benda / cocokkan bayangan: siluet dari gambar hewan, pilih 1 dari 3; tidak sama dengan main terakhir).
+- [ ] 5. **Progres localStorage** + semua A–Z terbuka + bintang saat 3 mini-game selesai + main ulang dari awal tetap bisa.
+
+### Tahap 2: lebih mekanis (Opus boleh)
+- [ ] 6. Bundel **Noto Emoji** sebagai gambar (cek lisensi, unduh hanya 23 hewan yang dipakai, WebP kecil); pasang quokka/xerus/yak/Lio dari `assets/`.
+- [ ] 7. **Album stiker** (tombol 📒, 26 kotak, bayangan abu-abu → berwarna, hewan terbang ke album saat menang).
+- [ ] 8. **Tangan penunjuk** (contoh gerakan tiap awal mini-game; muncul lagi saat diam 5 detik).
+- [ ] 9. **Semua bisa diketuk** (Lio, hewan, awan, daun bereaksi) + animasi Motion untuk transisi layar, popup, tombol.
+- [ ] 10. **Anti kepencet**: kunci zoom/tarik-refresh, tombol back HP, reset progres lewat tekan-lama logo (3 detik + konfirmasi), sembunyikan tag PROTOTIPE.
+- [ ] 11. Pindahkan cover, peta huruf, kartu pembuka, layar menang dari prototipe (tema hutan, animasi cover); paywall disembunyikan lewat satu flag.
+- [ ] 12. Polesan UI/UX, komponen 21st.dev seperlunya, tes di layar 360×640 / 390×844 / tablet, tanpa error JS.
+
+### Catatan untuk model berikutnya
+- Bentuk huruf kecil a dan g harus **tulisan tangan**; font di game-nya juga.
+- Untuk setiap huruf yang ditambah, cek hewannya **badan utuh** (bukan wajah saja).
+- Jika kuota habis atau model berganti: baca daftar centang di atas, lanjutkan butir `[ ]` pertama.

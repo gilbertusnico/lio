@@ -3,6 +3,7 @@
 import { LETTERS } from "@/data/letters";
 import { FREE_LETTERS, PAYWALL_ENABLED } from "@/lib/config";
 import type { Progress } from "@/lib/progress";
+import Pop from "./Pop";
 
 const TILE_STYLE: [string, string][] = [
   ["linear-gradient(180deg,#ffa24f,#ff7417)", "#d4560a"],
@@ -18,15 +19,15 @@ export default function LetterMap({ progress, onPick }: { progress: Progress; on
   const stars = LETTERS.filter((l) => progress.done[l.ch]).length;
   return (
     <section id="map" className="screen on">
-      <h2><span className="sparkle">Pilih Huruf</span></h2>
+      <Pop><h2><span className="sparkle">Pilih Huruf</span></h2></Pop>
       <div className="legend">{stars > 0 ? `⭐ ${stars} dari 26 huruf selesai` : "Pilih huruf mana saja ya!"}</div>
       <div className="grid" id="grid">
         {LETTERS.map((l, i) => {
           const locked = PAYWALL_ENABLED && i >= FREE_LETTERS;
           const [bg, shadow] = TILE_STYLE[i % TILE_STYLE.length];
           return (
+            <Pop key={l.ch} i={i} step={0.022} delay={0.08} className="tile-wrap">
             <button
-              key={l.ch}
               className={`tile${locked ? " locked" : ""}`}
               style={locked ? undefined : { background: bg, boxShadow: `0 6px 0 ${shadow}` }}
               onClick={() => onPick(i)}
@@ -35,6 +36,7 @@ export default function LetterMap({ progress, onPick }: { progress: Progress; on
               {l.ch}
               {locked ? <span className="lock">🔒</span> : progress.done[l.ch] && <span className="badge">⭐</span>}
             </button>
+            </Pop>
           );
         })}
       </div>

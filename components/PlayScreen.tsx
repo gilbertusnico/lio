@@ -8,6 +8,7 @@ import FindGame from "./FindGame";
 import CountGame from "./CountGame";
 import ShadowGame from "./ShadowGame";
 import Critter from "./Critter";
+import Pop from "./Pop";
 import { LioTalk, type PoseName } from "./Lio";
 
 type Props = {
@@ -74,17 +75,17 @@ export default function PlayScreen(p: Props) {
 
   return (
     <section id="play" className="screen on">
-      <div className="top">
+      <Pop className="top" from={0.8}>
         <button className="btn ghost icon-btn" id="btnBack" aria-label="Kembali ke Pilih Huruf" onClick={p.onBack}>🗺️</button>
         <div className="title" id="playTitle">{title}</div>
         <button className={`btn ghost icon-btn music-btn${p.musicOn ? "" : " off"}`} aria-label="Musik" onClick={p.onToggleMusic}>
           {p.musicOn ? "🎵" : "🔇"}
         </button>
-      </div>
+      </Pop>
       <div className="steps" id="steps">
         {steps.map((icon, i) => (
+          <Pop key={i} i={i} step={0.07} delay={0.1}>
           <button
-            key={i}
             className={`step${i < game ? " done" : ""}${i === game ? " on" : ""}`}
             disabled={i >= game}
             onClick={() => p.onJump(i)}
@@ -92,8 +93,10 @@ export default function PlayScreen(p: Props) {
           >
             {i < game ? "✅" : icon}
           </button>
+          </Pop>
         ))}
       </div>
+      <Pop className="card-pop" delay={0.18} from={0.7}>
       <div
         ref={cardRef}
         onAnimationEnd={(e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove("shake"); }}
@@ -104,6 +107,7 @@ export default function PlayScreen(p: Props) {
         {/* Hewan tidak tampil di mini-game 3 supaya tidak ikut terhitung / membocorkan bayangan */}
         {game < 2 && <Critter key={`c${p.round}`} letter={L} pose={p.pose.name} n={p.pose.n} />}
         {game === 0 ? (
+          <Pop key={`t${p.round}-${tr.n}`} from={0.85}>
           <TraceBoard
             key={`${p.round}-${tr.n}`} letter={L} size={size}
             startLower={tr.lower} onLower={() => setTrace({ ...tr, lower: true })}
@@ -116,6 +120,7 @@ export default function PlayScreen(p: Props) {
             }}
             onStrokes={setStrokes}
           />
+          </Pop>
         ) : (
           <div className="quiz" id="quiz" style={{ width: size, height: size }}>
             {game === 1 && <FindGame key={p.round} {...common} />}
@@ -124,12 +129,13 @@ export default function PlayScreen(p: Props) {
           </div>
         )}
       </div>
+      </Pop>
       <div className="dots" id="dots" style={{ visibility: game === 0 ? "visible" : "hidden" }}>
         {Array.from({ length: strokes.total }, (_, i) => (
           <div key={i} className={`dot${i < strokes.done ? " done" : ""}`} style={i < strokes.done ? { background: L.color } : undefined} />
         ))}
       </div>
-      <div className="talk">
+      <Pop className="talk" delay={0.3} from={0.7}>
         <LioTalk pose={p.pose.name} n={p.pose.n} />
         <div className="bubble" id="bubble">{p.bubble}</div>
         {/* Ulangi: ikon kecil di samping gelembung, jauh dari papan supaya tidak kepencet saat menggores */}
@@ -142,7 +148,7 @@ export default function PlayScreen(p: Props) {
         >
           ↺
         </button>
-      </div>
+      </Pop>
     </section>
   );
 }

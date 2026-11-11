@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { LETTERS, SHADOW_CONFUSABLE, type Letter } from "@/data/letters";
 import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
+import Pop from "./Pop";
 import type { PoseName } from "./Lio";
 
 /**
@@ -68,20 +69,24 @@ export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
         <div className="shadow-rounds">
           {rounds.map((_, i) => <span key={i} className={i < r || (i === r && solved) ? "done" : i === r ? "on" : ""} />)}
         </div>
-        <img key={r} className={`shadow-img${solved ? " reveal" : ""}`} src={target.img} alt="Bayangan hewan" draggable={false} />
+        <Pop key={r} className="shadow-pop" from={0.5}>
+          <img className={`shadow-img${solved ? " reveal" : ""}`} src={target.img} alt="Bayangan hewan" draggable={false} />
+        </Pop>
       </div>
       <div className="qopts shadow-opts">
-        {opts.map((o) => {
+        {opts.map((o, i) => {
           const w = wrong.find((x) => x.ch === o.ch);
           return (
+            <Pop key={`${r}${o.ch}`} i={i} step={0.08} delay={0.25}>
             <button
-              key={`${r}${o.ch}${w ? `w${w.n}` : ""}`}
+              key={w ? `w${w.n}` : "b"}
               className={`btn ghost qopt shadow-opt${w ? " wrong" : ""}${solved && o.ch === target.ch ? " right" : ""}`}
               onClick={() => pick(o)}
               aria-label={o.word}
             >
               <img src={o.img} alt="" draggable={false} />
             </button>
+            </Pop>
           );
         })}
       </div>

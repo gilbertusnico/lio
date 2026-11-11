@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { LETTERS } from "@/data/letters";
 import { FREE_LETTERS, PAYWALL_ENABLED } from "@/lib/config";
 import { audio, musicPref, setMusicPref, sfx, startMusic, stopMusic } from "@/lib/audio";
@@ -109,7 +109,7 @@ export default function Game() {
   }
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <Leaves />
 
       <AnimatePresence mode="wait">
@@ -220,6 +220,6 @@ export default function Game() {
         <img src={lioSrc("menunjuk")} alt="" draggable={false} />
         <p>Putar HP-nya dulu ya!</p>
       </div>
-    </>
+    </MotionConfig>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { NUM, type Letter } from "@/data/letters";
 import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
+import Pop from "./Pop";
 import type { PoseName } from "./Lio";
 
 /** Mini-game 3a: hitung hewan (3–6). Ketuk satu-satu untuk menghitung, lalu pilih angkanya. */
@@ -49,20 +50,24 @@ export default function CountGame({ letter, onDone, onSay, onPose }: Props) {
         {Array.from({ length: n }, (_, i) => {
           const k = order.indexOf(i);
           return (
-            <button key={i} className={`qitem${k >= 0 ? " counted" : ""}`} onClick={() => count(i)} aria-label={word}>
+            <Pop key={i} i={i} step={0.07}>
+            <button className={`qitem${k >= 0 ? " counted" : ""}`} onClick={() => count(i)} aria-label={word}>
               <img src={letter.img} alt="" draggable={false} />
               {k >= 0 && <span className="n">{k + 1}</span>}
             </button>
+            </Pop>
           );
         })}
       </div>
       <div className="qopts">
-        {opts.map((v) => {
+        {opts.map((v, i) => {
           const w = wrong.find((x) => x.v === v);
           return (
-            <button key={v + (w ? `w${w.n}` : "")} className={`btn ghost qopt${w ? " wrong" : ""}`} onClick={() => answer(v)}>
+            <Pop key={v} i={i} step={0.07} delay={0.45}>
+            <button key={w ? `w${w.n}` : "b"} className={`btn ghost qopt${w ? " wrong" : ""}`} onClick={() => answer(v)}>
               {v}
             </button>
+            </Pop>
           );
         })}
       </div>

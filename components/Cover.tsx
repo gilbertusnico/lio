@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import Leaves from "./Leaves";
+import Pop from "./Pop";
 import { lioSrc } from "./Lio";
 
 /** Cover: pemandangan hutan, judul, Lio melambai, tombol Mulai Main. */
@@ -23,24 +24,25 @@ export default function Cover({ onStart, onReset }: { onStart: () => void; onRes
       <div className="butterfly"><span><img src="/animals/kupu-kupu.webp" alt="" draggable={false} /></span></div>
       <div className="cover-leaf tr" /><div className="cover-leaf bl" /><div className="cover-leaf br" />
       <Leaves />
-      <div className="cover-stage">
+      <Pop className="cover-stage" delay={0.38} from={0.6} style={{ transformOrigin: "50% 100%" }}>
         <div className="bush l" /><div className="bush r" /><div className="rock" /><div className="ground" />
         <div className="lio start lio-wave" role="img" aria-label="Lio si Singa">
           <img className="lw-body" src={lioSrc("depan-melambai")} alt="" draggable={false} />
         </div>
-      </div>
+      </Pop>
       <h1>
-        <span className="t1">Belajar Bareng</span>
-        <span
+        <Pop className="t1" delay={0.05}>Belajar Bareng</Pop>
+        <Pop
+          delay={0.16} from={0.3}
           className="t2 sparkle"
           onPointerDown={press} onPointerUp={cancel} onPointerLeave={cancel} onPointerCancel={cancel}
           onContextMenu={(e) => e.preventDefault()}
         >
           Lio
-        </span>
+        </Pop>
       </h1>
-      <div className="sub">🌿 Petualangan Huruf 🌿</div>
-      <button className="btn green" id="btnStart" onClick={onStart}>▶ Mulai Main</button>
+      <Pop className="sub" delay={0.3}>🌿 Petualangan Huruf 🌿</Pop>
+      <Pop className="start-wrap" delay={0.6}><button className="btn green" id="btnStart" onClick={onStart}>▶ Mulai Main</button></Pop>
     </section>
   );
 }

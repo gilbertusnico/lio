@@ -103,3 +103,20 @@ button.step:disabled { cursor: default; }
 /* Judul selalu mulai di bawah tombol musik, juga di HP pendek */
 #start { padding-top: 74px; }
 @media (min-width: 600px) and (min-height: 800px) { #start { padding-top: 80px; } }
+
+/* "Lio" di cover: titik huruf i dulu terpotong karena tinggi baris lebih pendek dari hurufnya */
+#start h1 .t2 { padding-top: .16em; margin-top: -.1em; }
+#start h1 .t1 { display: block; }
+
+/* Pembungkus animasi muncul (components/Pop.tsx) */
+.start-wrap { order: 4; flex: none; }
+#start .cover-stage { order: 3; }
+.tile-wrap, .qcell { display: flex; }
+.tile-wrap > .tile, .qcell > .qb { flex: 1; width: 100%; }
+.tile-wrap > .tile { aspect-ratio: 1; }
+.card-pop { margin-top: 48px; }
+.card-pop > .card { margin-top: 0; }
+.shadow-pop { height: 86%; max-width: 86%; display: flex; align-items: center; justify-content: center; }
+.shadow-pop > .shadow-img { height: 100%; max-width: 100%; }
+#play .top { width: 100%; }
+#start h1 .t2.sparkle:after { top: .2em; }

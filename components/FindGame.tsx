@@ -4,6 +4,7 @@ import { useState } from "react";
 import { NUM, type Letter } from "@/data/letters";
 import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
+import Pop from "./Pop";
 import type { PoseName } from "./Lio";
 
 /**
@@ -62,6 +63,7 @@ export default function FindGame({ letter, onDone, onSay, onPose }: Props) {
       {cells.map((c, i) => {
         const ok = found.includes(i);
         return (
+          <Pop key={i} i={i} step={0.045} className="qcell">
           <button
             key={i + (wrong?.i === i ? `w${wrong.n}` : "")}
             className={`qb${ok ? " found" : ""}${wrong?.i === i ? " wrong" : ""}`}
@@ -71,6 +73,7 @@ export default function FindGame({ letter, onDone, onSay, onPose }: Props) {
           >
             {c}
           </button>
+          </Pop>
         );
       })}
     </div>

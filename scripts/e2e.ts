@@ -69,7 +69,7 @@ async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<v
   await shot(`${ch}-3-kecil`);
   // Keluar garis saat menebalkan huruf kecil: tetap di huruf kecil, kapital tidak diulang
   const lp = layout(upper, lower).lower, l0 = lower.strokes[0][0];
-  const lx = r.x + r.width * (PADR + ((lp.ox + l0[0]) / 100) * (1 - 2 * PADR)), ly = r.y + r.height * (PADR + ((lp.oy + l0[1]) / 100) * (1 - 2 * PADR));
+  const lx = r.x + r.width * (PADR + ((lp.ox + lp.s * l0[0]) / 100) * (1 - 2 * PADR)), ly = r.y + r.height * (PADR + ((lp.oy + lp.s * l0[1]) / 100) * (1 - 2 * PADR));
   const dotsLower = await page.locator("#dots .dot").count();
   if (dotsLower !== lower.strokes.length) throw new Error(`${ch}: belum masuk huruf kecil`);
   await page.mouse.move(lx, ly);
@@ -123,9 +123,14 @@ async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<v
     await page.locator(".qopt", { hasText: new RegExp(`^${n}$`) }).click({ force: true });
   } else {
     kind = "shadow";
-    if ((await page.locator(".shadow-opt").count()) !== 3) throw new Error(`${ch}: pilihan bayangan bukan 3`);
-    await shot(`${ch}-6-bayangan`);
-    await page.locator(`.shadow-opt[aria-label="${L.word}"]`).click({ force: true });
+    for (let round = 0; round < 3; round++) {
+      if ((await page.locator(".shadow-opt").count()) !== 3) throw new Error(`${ch}: pilihan bayangan bukan 3`);
+      const word = await page.locator(".shadow-stage").getAttribute("data-word");
+      if (round === 2 && word !== L.word) throw new Error(`${ch}: ronde terakhir bukan hewan huruf ini`);
+      if (round === 0) await shot(`${ch}-6-bayangan`);
+      await page.locator(`.shadow-opt[aria-label="${word}"]`).click({ force: true });
+      await page.waitForTimeout(1400);
+    }
   }
   await page.locator("#win").waitFor({ timeout: 6000 });
   await page.waitForTimeout(600);
@@ -158,7 +163,13 @@ async function main() {
     await page.locator("#winRetry").click({ force: true });
     await page.locator("#win").waitFor({ state: "detached" });
     await page.locator("#board").waitFor();
+    // 🗺️ bertanya dulu: "Lanjut main" membatalkan, "Keluar" baru kembali ke Pilih Huruf
     await page.locator("#btnBack").click({ force: true });
+    await page.locator("#leaveNo").click({ force: true });
+    await page.locator("#leave").waitFor({ state: "detached" });
+    if (!(await page.locator("#board").count())) throw new Error(`${ch}: "Lanjut main" malah keluar`);
+    await page.locator("#btnBack").click({ force: true });
+    await page.locator("#leaveYes").click({ force: true });
     await page.locator("#grid").waitFor();
     if (!(await page.locator(".tile", { hasText: new RegExp(`^${ch}`) }).locator(".badge").count())) throw new Error(`${ch}: bintang tidak muncul`);
     // Main ulang: jenis mini-game 3 berikutnya harus kebalikannya

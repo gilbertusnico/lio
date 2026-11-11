@@ -251,7 +251,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
 
       const pts = g.strokes[st.stroke];
       ctx.strokeStyle = color;
-      ctx.lineWidth = iw * unit();
+      ctx.lineWidth = iw * unit() * pose.s;
       if (st.prog > 0) path(pts, st.prog, pose);
       const a = pts[st.prog], b = pts[Math.min(st.prog + 10, pts.length - 1)];
       if (!st.drawing && !isDot(pts) && dist(a, b) > 1) {
@@ -300,7 +300,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
 
       const k = ease(Math.min(1, (performance.now() - st.t0) / (st.phase === "toLower" ? T_LOWER : T_BOTH)));
       const ph = st.phase;
-      lines(ph === "toBoth" ? mix(ID, lay.linesEnd, k) : ph === "both" ? lay.linesEnd : ID);
+      lines(ph === "upper" ? ID : ph === "toLower" ? mix(ID, lay.linesLower, k) : ph === "lower" ? lay.linesLower : ph === "toBoth" ? mix(lay.linesLower, lay.linesEnd, k) : lay.linesEnd);
 
       if (ph === "upper") tracing(upper, ID, "upper", t);
       else {

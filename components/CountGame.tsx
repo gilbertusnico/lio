@@ -13,7 +13,8 @@ const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 export default function CountGame({ letter, onDone, onSay, onPose }: Props) {
   const word = letter.word === "Lio" ? "Lio" : letter.word.toLowerCase();
   const [n] = useState(() => 3 + Math.floor(Math.random() * 4));
-  const [opts] = useState(() => shuffle([n - 1, n, n + 1]));
+  // Dua pengecoh diambil acak dari n-2…n+2, supaya jawaban benar tidak selalu angka yang di tengah.
+  const [opts] = useState(() => shuffle([n, ...shuffle([n - 2, n - 1, n + 1, n + 2].filter((v) => v >= 1)).slice(0, 2)]));
   const [order, setOrder] = useState<number[]>([]); // indeks hewan sesuai urutan diketuk
   const [wrong, setWrong] = useState<{ v: number; n: number }[]>([]);
   const [done, setDone] = useState(false);

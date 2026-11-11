@@ -56,3 +56,38 @@ button.step { border: 0; padding: 0; font-family: inherit; color: inherit; }
 button.step.done { cursor: pointer; box-shadow: 0 3px 0 #b5dcbb; }
 button.step.done:active { transform: translateY(2px); box-shadow: 0 1px 0 #b5dcbb; }
 button.step:disabled { cursor: default; }
+
+/* Papan lebih lebar: tepi kartu ditipiskan */
+.card { padding: 10px; }
+
+/* Ulangi: ikon kecil di kanan gelembung Lio */
+.retry-btn { flex: none; width: 46px; height: 46px; font-size: 24px; border-radius: 16px; line-height: 1; }
+.talk { margin-top: 0; }
+
+/* Konfirmasi keluar */
+.leave-lio { height: 120px; margin: 0 auto; object-fit: contain; }
+.panel h3.leave-title { font-size: 30px; margin: 6px 0 14px; }
+.leave-btns { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.leave-btns .btn.green { font-size: 26px; padding: 14px 30px; min-width: 240px; }
+.leave-btns .btn.ghost { font-size: 17px; padding: 8px 18px; }
+
+/* HP posisi miring: layar tidak muat, minta diputar */
+.rotate-hint { display: none; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .rotate-hint { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 22px;
+    background: linear-gradient(180deg, #e6f6ff, #f1faea 55%, #fdf5d8); }
+  .rotate-hint img { height: 60vh; object-fit: contain; }
+  .rotate-hint p { font-size: 26px; font-weight: 800; color: var(--ink); }
+  .rotate-phone { font-size: 64px; animation: rotatePhone 1.8s ease-in-out infinite; }
+}
+@keyframes rotatePhone { 0%, 20% { transform: rotate(90deg); } 60%, 100% { transform: rotate(0deg); } }
+
+/* Cocokkan bayangan: 3 ronde */
+.shadow-rounds { position: absolute; top: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 8px; pointer-events: none; }
+.shadow-rounds span { width: 12px; height: 12px; border-radius: 50%; background: #e3e8f0; }
+.shadow-rounds span.done { background: #ffc93c; }
+.shadow-rounds span.on { background: #fff; box-shadow: 0 0 0 3px #ffc93c; }
+.shadow-stage { position: relative; }
+
+/* Gelembung Lio: teks mengecil sedikit di HP sempit supaya tidak sampai 4 baris */
+.bubble { font-size: clamp(16px, 4.5vw, 20px); line-height: 1.3; }

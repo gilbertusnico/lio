@@ -28,6 +28,7 @@ export default function Game() {
   const [round, setRound] = useState(0); // naik tiap mini-game dimulai/diulang → komponen dibuat baru
   const [intro, setIntro] = useState(false);
   const [win, setWin] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [pay, setPay] = useState<null | "locked" | "win">(null);
   const [bubble, setBubble] = useState("…");
   const [pose, setPoseState] = useState<{ name: PoseName; n: number }>({ name: "menunjuk", n: 0 });
@@ -97,6 +98,7 @@ export default function Game() {
     clearTimer();
     setWin(false);
     setIntro(false);
+    setLeaving(false);
     setScreen("map");
   }
 
@@ -130,7 +132,7 @@ export default function Game() {
               letter={L} game={game} mini3={mini3} round={round}
               bubble={bubble} pose={pose} musicOn={musicOn}
               onSay={say} onPose={setPose} onGameDone={gameDone}
-              onBack={goMap} onRetry={() => startGame(game)} onJump={(g) => { if (g < game) startGame(g); }} onToggleMusic={toggleMusic}
+              onBack={() => setLeaving(true)} onRetry={() => startGame(game)} onJump={(g) => { if (g < game) startGame(g); }} onToggleMusic={toggleMusic}
             />
           </motion.div>
         )}
@@ -149,6 +151,22 @@ export default function Game() {
               <div className="row" style={{ justifyContent: "center", marginTop: 12 }}>
                 <button className="btn ghost" onClick={goMap} aria-label="Kembali">↩</button>
                 <button className="btn green" id="introGo" onClick={() => { audio(); setIntro(false); startGame(0); }}>Mulai ▶</button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Tombol 🗺️ saat main: tanya dulu, supaya tidak keluar karena kepencet */}
+      <AnimatePresence>
+        {leaving && screen === "play" && (
+          <motion.div key="leave" className="overlay on" id="leave" {...fade}>
+            <div className="panel">
+              <img className="leave-lio" src={lioSrc("sedih")} alt="" draggable={false} />
+              <h3 className="leave-title">Berhenti main?</h3>
+              <div className="leave-btns">
+                <button className="btn green" id="leaveNo" onClick={() => setLeaving(false)}>▶ Lanjut main</button>
+                <button className="btn ghost" id="leaveYes" onClick={goMap}>🗺️ Keluar</button>
               </div>
             </div>
           </motion.div>
@@ -195,6 +213,13 @@ export default function Game() {
         </button>
       )}
       <Fx ref={fx} />
+
+      {/* HP dimiringkan: minta diputar tegak (tampil lewat CSS, lihat .rotate-hint) */}
+      <div className="rotate-hint" aria-hidden>
+        <div className="rotate-phone">📱</div>
+        <img src={lioSrc("menunjuk")} alt="" draggable={false} />
+        <p>Putar HP-nya dulu ya!</p>
+      </div>
     </>
   );
 }

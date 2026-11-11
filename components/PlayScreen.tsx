@@ -30,8 +30,8 @@ type Props = {
 
 /** Sisi papan: sebesar mungkin, tetapi bar atas, langkah, Lio, dan tombol tetap muat di layar. */
 function boardSize() {
-  const avail = window.innerHeight - 390;
-  return Math.round(Math.max(220, Math.min(window.innerWidth - 60, avail, 520)));
+  const avail = window.innerHeight - 330;
+  return Math.round(Math.max(220, Math.min(window.innerWidth - 52, avail, 560)));
 }
 
 export default function PlayScreen(p: Props) {
@@ -132,16 +132,17 @@ export default function PlayScreen(p: Props) {
       <div className="talk">
         <LioTalk pose={p.pose.name} n={p.pose.n} />
         <div className="bubble" id="bubble">{p.bubble}</div>
-      </div>
-      <div className="row"><button
-          className="btn ghost" id="btnRetry"
+        {/* Ulangi: ikon kecil di samping gelembung, jauh dari papan supaya tidak kepencet saat menggores */}
+        <button
+          className="btn ghost icon-btn retry-btn" id="btnRetry" aria-label="Ulangi"
           onClick={() => {
             if (game === 0 && tr.lower) { setTrace({ ...tr, n: tr.n + 1 }); p.onPose("menunjuk"); }
             else p.onRetry();
           }}
         >
-          ↺ Ulangi
-        </button></div>
+          ↺
+        </button>
+      </div>
     </section>
   );
 }

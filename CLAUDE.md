@@ -209,6 +209,8 @@ Butir 1–6 dan 11 selesai, dites, dan di-push ke branch `claude/adoring-thompso
 - **Gambar hewan**: Noto Emoji (Apache 2.0) dari paket `@iconify-json/noto`, 256px WebP, total ±250 KB. Zebra versi baru sudah badan utuh.
 - **Paywall**: `PAYWALL_ENABLED` di `lib/config.ts` (sekarang `false`).
 - **Butir 10 baru sebagian**: tekan lama logo "Lio" 3 detik sudah mereset progres, tetapi konfirmasinya masih `window.confirm`; tag PROTOTIPE sudah tidak ada. Belum: kunci tarik-refresh, tombol back HP.
+- **Perbaikan UX (11 Nov, setelah review)**: (a) HP miring menampilkan layar "Putar HP-nya dulu ya!" (CSS `.rotate-hint`, hanya saat tinggi layar < 520px); (b) saat menebalkan huruf kecil, huruf dan garis buku diperbesar sampai ±1,6× sesuai lebar huruf (`layout()` di `lib/traceLayout.ts`), papan sedikit lebih lebar; (c) tombol 🗺️ saat main bertanya dulu ("Berhenti main?"), Ulangi jadi ikon kecil ↺ di kanan gelembung Lio; (d) cocokkan bayangan jadi 3 ronde (2 hewan lain, terakhir hewan huruf itu) dan pilihan hitung tidak lagi selalu n−1/n/n+1; (e) keluar garis tidak mengulang dari kapital, Ulangi hanya mengulang bentuk yang sedang ditebalkan, ikon langkah ✅ bisa diketuk untuk main lagi.
+- **Temuan review yang BELUM dikerjakan**: petunjuk masih teks saja (tangan penunjuk = butir 8; suara rekaman menunggu keputusan pemilik), goresan naik-turun membingungkan tanpa contoh, peta huruf datar, ikon UI masih emoji bawaan, musik berulang tiap ±9 detik.
 - **Belum dites di HP asli.** Semua tes memakai Chromium headless (360×640, 390×844, 768×1024).
 
 ### Catatan untuk model berikutnya

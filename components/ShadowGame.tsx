@@ -6,56 +6,77 @@ import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
 import type { PoseName } from "./Lio";
 
-/** Mini-game 3b: cocokkan bayangan. Bayangan hewan huruf ini, pilih 1 dari 3 gambar. */
+/**
+ * Mini-game 3b: cocokkan bayangan, 3 ronde. Tiap ronde: satu bayangan hewan, pilih 1 dari 3 gambar.
+ * Dua ronde pertama hewan lain (supaya tidak bisa ditebak dari hewan yang jalan-jalan di papan),
+ * ronde terakhir hewan huruf ini.
+ */
 type Props = { letter: Letter; onDone: () => void; onSay: (t: string) => void; onPose: (p: PoseName) => void };
+type Round = { target: Letter; opts: Letter[] };
+const ROUNDS = 3;
+const nameOf = (l: Letter) => (l.word === "Lio" ? "Lio" : l.word.toLowerCase());
 
-export function makeOptions(letter: Letter): Letter[] {
-  const banned = new Set([letter.ch]);
-  for (const [a, b] of SHADOW_CONFUSABLE) {
-    if (a === letter.ch) banned.add(b);
-    if (b === letter.ch) banned.add(a);
-  }
-  const others = shuffle(LETTERS.filter((l) => !banned.has(l.ch))).slice(0, 2);
-  return shuffle([letter, ...others]);
+function confusable(a: string, b: string) {
+  return SHADOW_CONFUSABLE.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+}
+function makeRound(target: Letter): Round {
+  const others = shuffle(LETTERS.filter((l) => l.ch !== target.ch && !confusable(l.ch, target.ch))).slice(0, 2);
+  return { target, opts: shuffle([target, ...others]) };
+}
+export function makeRounds(letter: Letter): Round[] {
+  const warmups = shuffle(LETTERS.filter((l) => l.ch !== letter.ch)).slice(0, ROUNDS - 1);
+  return [...warmups, letter].map(makeRound);
 }
 
 export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
-  const word = letter.word === "Lio" ? "Lio" : letter.word.toLowerCase();
-  const [opts] = useState(() => makeOptions(letter));
+  const [rounds] = useState(() => makeRounds(letter));
+  const [r, setR] = useState(0);
   const [wrong, setWrong] = useState<{ ch: string; n: number }[]>([]);
-  const [done, setDone] = useState(false);
+  const [solved, setSolved] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  const { target, opts } = rounds[r];
 
   function pick(o: Letter) {
     audio();
-    if (done) return;
-    if (o.ch === letter.ch) {
-      setDone(true);
-      sfx.ding();
-      onPose("jempol");
-      onSay(`Betul! Itu bayangan ${word}.`);
-      timer.current = setTimeout(onDone, 1100); // beri waktu melihat bayangan berubah jadi gambar
+    if (solved) return;
+    if (o.ch !== target.ch) {
+      sfx.oops();
+      onPose("sedih");
+      setWrong((w) => [...w.filter((x) => x.ch !== o.ch), { ch: o.ch, n: w.length + 1 }]);
+      onSay("Bukan itu. Lihat bentuknya baik-baik ya!");
       return;
     }
-    sfx.oops();
-    onPose("sedih");
-    setWrong((w) => [...w.filter((x) => x.ch !== o.ch), { ch: o.ch, n: w.length + 1 }]);
-    onSay("Bukan itu. Lihat bentuknya baik-baik ya!");
+    setSolved(true);
+    sfx.ding();
+    onPose("jempol");
+    onSay(`Betul! Itu bayangan ${nameOf(target)}.`);
+    // beri waktu melihat bayangan berubah jadi gambar, lalu ronde berikutnya
+    timer.current = setTimeout(() => {
+      if (r + 1 >= ROUNDS) return onDone();
+      setR(r + 1);
+      setWrong([]);
+      setSolved(false);
+      onPose("menunjuk");
+      onSay(r + 1 === ROUNDS - 1 ? "Yang terakhir! Bayangan siapa ini?" : "Kalau yang ini, bayangan siapa?");
+    }, 1100);
   }
 
   return (
     <>
-      <div className="shadow-stage">
-        <img className={`shadow-img${done ? " reveal" : ""}`} src={letter.img} alt="Bayangan hewan" draggable={false} />
+      <div className="shadow-stage" data-word={target.word}>
+        <div className="shadow-rounds">
+          {rounds.map((_, i) => <span key={i} className={i < r || (i === r && solved) ? "done" : i === r ? "on" : ""} />)}
+        </div>
+        <img key={r} className={`shadow-img${solved ? " reveal" : ""}`} src={target.img} alt="Bayangan hewan" draggable={false} />
       </div>
       <div className="qopts shadow-opts">
         {opts.map((o) => {
           const w = wrong.find((x) => x.ch === o.ch);
           return (
             <button
-              key={o.ch + (w ? `w${w.n}` : "")}
-              className={`btn ghost qopt shadow-opt${w ? " wrong" : ""}${done && o.ch === letter.ch ? " right" : ""}`}
+              key={`${r}${o.ch}${w ? `w${w.n}` : ""}`}
+              className={`btn ghost qopt shadow-opt${w ? " wrong" : ""}${solved && o.ch === target.ch ? " right" : ""}`}
               onClick={() => pick(o)}
               aria-label={o.word}
             >

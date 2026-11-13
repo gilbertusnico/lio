@@ -12,6 +12,7 @@ import PlayScreen from "./PlayScreen";
 import Leaves from "./Leaves";
 import Fx, { type FxHandle } from "./Fx";
 import Paywall from "./Paywall";
+import Album from "./Album";
 import { LIO_POSES, lioSrc, type PoseName } from "./Lio";
 
 type Screen = "start" | "map" | "play";
@@ -29,14 +30,20 @@ export default function Game() {
   const [intro, setIntro] = useState(false);
   const [win, setWin] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [album, setAlbum] = useState(false);
+  const [newSticker, setNewSticker] = useState(false);
+  const [fly, setFly] = useState<{ from: DOMRect; to: DOMRect } | null>(null);
   const [pay, setPay] = useState<null | "locked" | "win">(null);
   const [bubble, setBubble] = useState("…");
   const [pose, setPoseState] = useState<{ name: PoseName; n: number }>({ name: "menunjuk", n: 0 });
   const [progress, setProgress] = useState<Progress>(emptyProgress);
   const [musicOn, setMusicOn] = useState(true);
   const fx = useRef<FxHandle>(null);
+  const winImg = useRef<HTMLImageElement>(null);
+  const albumBtn = useRef<HTMLButtonElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const L = LETTERS[cur];
+  const stickerCount = LETTERS.filter((l) => progress.done[l.ch]).length;
 
   // localStorage baru bisa dibaca setelah halaman statis dihidupkan di browser.
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -46,6 +53,17 @@ export default function Game() {
     LIO_POSES.forEach((p) => { new Image().src = lioSrc(p); }); // supaya ganti pose tidak berkedip
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Stiker baru: hewan terbang dari Lio ke ikon album.
+  useEffect(() => {
+    if (!win || !newSticker) { setFly(null); return; }
+    const t = setTimeout(() => {
+      const a = winImg.current?.getBoundingClientRect();
+      const b = albumBtn.current?.getBoundingClientRect();
+      if (a && b) setFly({ from: a, to: b });
+    }, 520);
+    return () => clearTimeout(t);
+  }, [win, newSticker]);
 
   const say = useCallback((t: string) => setBubble(t), []);
   const setPose = useCallback((name: PoseName) => setPoseState((p) => ({ name, n: p.n + 1 })), []);
@@ -66,6 +84,8 @@ export default function Game() {
     setCur(i);
     setMini3(pickMini3(progress.last3[LETTERS[i].ch]));
     setWin(false);
+    setNewSticker(false);
+    setFly(null);
     setIntro(true);
   }
 
@@ -87,6 +107,7 @@ export default function Game() {
 
   function levelDone() {
     const next: Progress = { done: { ...progress.done, [L.ch]: true }, last3: { ...progress.last3, [L.ch]: mini3 } };
+    setNewSticker(!progress.done[L.ch]);
     setProgress(next);
     saveProgress(next);
     sfx.win();
@@ -97,6 +118,8 @@ export default function Game() {
   function goMap() {
     clearTimer();
     setWin(false);
+    setNewSticker(false);
+    setFly(null);
     setIntro(false);
     setLeaving(false);
     setScreen("map");
@@ -123,7 +146,7 @@ export default function Game() {
         )}
         {screen === "map" && (
           <motion.div key="map" {...fade}>
-            <LetterMap progress={progress} onPick={startLetter} />
+            <LetterMap progress={progress} onPick={startLetter} onAlbum={() => { audio(); setAlbum(true); }} />
           </motion.div>
         )}
         {screen === "play" && (
@@ -178,8 +201,24 @@ export default function Game() {
         {win && (
           <motion.div key="win" className="overlay light on" id="win" {...fade}>
             <Leaves />
+            {fly && (
+              <motion.img
+                className="fly-sticker" src={L.img} alt="" draggable={false}
+                initial={{ left: fly.from.left + fly.from.width / 2 - 44, top: fly.from.top + fly.from.height / 2 - 44, width: 88, height: 88, opacity: 1, rotate: 0 }}
+                animate={{ left: fly.to.left + fly.to.width / 2 - 20, top: fly.to.top + fly.to.height / 2 - 20, width: 40, height: 40, opacity: 0.9, rotate: 18 }}
+                transition={{ duration: 0.85, ease: [0.4, 0, 0.2, 1] }}
+                onAnimationComplete={() => setFly(null)}
+              />
+            )}
+            <button
+              ref={albumBtn} className="album-chip win-album" id="winAlbum"
+              onClick={() => { audio(); setAlbum(true); }} aria-label="Buka album stiker"
+            >
+              📒 <b>{stickerCount}</b>
+            </button>
+            {newSticker && <div className="stiker-baru">Stiker baru!</div>}
             <div className="panel">
-              <div className="win-row"><img className="lio lio-win" src={lioSrc("lompat")} alt="Lio" draggable={false} /></div>
+              <div className="win-row"><img ref={winImg} className="lio lio-win" src={lioSrc("lompat")} alt="Lio" draggable={false} /></div>
               <h3 id="winText">Huruf {L.ch} selesai!</h3>
               <div className="stars"><span>⭐</span><span>⭐</span><span>⭐</span></div>
               <div className="row" style={{ justifyContent: "center", marginTop: 16 }}>
@@ -201,6 +240,8 @@ export default function Game() {
       </AnimatePresence>
 
       <AnimatePresence>{pay && <Paywall key="pay" fromWin={pay === "win"} onClose={() => setPay(null)} />}</AnimatePresence>
+
+      {album && <Album progress={progress} onClose={() => setAlbum(false)} />}
 
       {screen === "map" && !intro && (
         <button className="btn ghost icon-btn home-float" id="btnHome" style={{ display: "block" }} aria-label="Kembali ke beranda" onClick={() => { audio(); setScreen("start"); }}>

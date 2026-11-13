@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GLYPHS, LINE, type Glyph, type Pt } from "@/data/glyphs";
 import type { Letter } from "@/data/letters";
 import { advance, canStart, dist, isDot } from "@/lib/trace";
 import { audio, sfx } from "@/lib/audio";
 import { PADR, layout, type Pose } from "@/lib/traceLayout";
+import Hand, { type HandPoint } from "./Hand";
 import type { PoseName } from "./Lio";
 
 /**
@@ -44,6 +45,9 @@ const ease = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) /
 
 export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops, onStrokes, startLower = false, onLower }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  /** Titik contoh gerakan tangan untuk goresan yang sedang dikerjakan. */
+  const handRef = useRef<() => HandPoint[]>(() => []);
+  const [demoKey, setDemoKey] = useState(0);
   const cb = useRef({ onDone, onSay, onPose, onOops, onStrokes, onLower });
   const sizeRef = useRef(size);
   useEffect(() => {
@@ -87,6 +91,23 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       const p = activePose();
       return [(bx - p.ox) / p.s, (by - p.oy) / p.s];
     }
+    // Tangan mencontohkan arah goresan: beberapa titik dari posisi sekarang ke depan.
+    handRef.current = () => {
+      const g = active();
+      if (!g) return [];
+      const pts = g.strokes[st.stroke];
+      if (!pts) return [];
+      const r = canvas.getBoundingClientRect();
+      const toScreen = (b: Pt): HandPoint => {
+        const c = place(b, activePose());
+        return { x: r.left + c[0], y: r.top + c[1] };
+      };
+      const last = pts.length - 1;
+      if (isDot(pts)) return [toScreen(pts[0])];
+      const endIdx = Math.min(last, st.prog + 26);
+      if (endIdx - st.prog < 3) return [];
+      return Array.from({ length: 5 }, (_, i) => toScreen(pts[Math.round(st.prog + ((endIdx - st.prog) * i) / 4)]));
+    };
 
     /* ---------- alur ---------- */
     function spawn(g: Pt, n: number) {
@@ -126,6 +147,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
           st.prog = 0;
           report();
           cb.current.onPose("menunjuk");
+          setDemoKey((k) => k + 1); // contoh lagi untuk huruf kecil
         }, T_LOWER);
       } else {
         st.phase = "toBoth";
@@ -340,5 +362,10 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
     };
   }, [letter, upper, lower, lay, startLower]);
 
-  return <canvas id="board" ref={canvasRef} style={{ width: size, height: size }} aria-label={`Papan menebalkan huruf ${letter.ch}`} />;
+  return (
+    <>
+      <canvas id="board" ref={canvasRef} style={{ width: size, height: size }} aria-label={`Papan menebalkan huruf ${letter.ch}`} />
+      <Hand points={() => handRef.current()} restart={demoKey} delay={1000} />
+    </>
+  );
 }

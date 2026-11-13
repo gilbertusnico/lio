@@ -192,15 +192,17 @@ Isi prototipe:
 
 ### Tahap 2: lebih mekanis (Opus boleh)
 - [x] 6. Bundel **Noto Emoji** sebagai gambar (cek lisensi, unduh hanya 23 hewan yang dipakai, WebP kecil); pasang quokka/xerus/yak/Lio dari `assets/`.
-- [ ] 7. **Album stiker** (tombol 📒, 26 kotak, bayangan abu-abu → berwarna, hewan terbang ke album saat menang).
-- [ ] 8. **Tangan penunjuk** (contoh gerakan tiap awal mini-game; muncul lagi saat diam 5 detik).
+- [x] 7. **Album stiker** (tombol 📒, 26 kotak, bayangan abu-abu → berwarna, hewan terbang ke album saat menang).
+- [x] 8. **Tangan penunjuk** (contoh gerakan tiap awal mini-game; muncul lagi saat diam 5 detik).
 - [ ] 9. **Semua bisa diketuk** (Lio, hewan, awan, daun bereaksi) + animasi Motion untuk transisi layar, popup, tombol.
 - [ ] 10. **Anti kepencet**: kunci zoom/tarik-refresh, tombol back HP, reset progres lewat tekan-lama logo (3 detik + konfirmasi), sembunyikan tag PROTOTIPE.
 - [x] 11. Pindahkan cover, peta huruf, kartu pembuka, layar menang dari prototipe (tema hutan, animasi cover); paywall disembunyikan lewat satu flag.
 - [ ] 12. Polesan UI/UX, komponen 21st.dev seperlunya, tes di layar 360×640 / 390×844 / tablet, tanpa error JS.
 
 ### Status versi Next.js (11 Nov 2026, sesi "mulai dev")
-Butir 1–6 dan 11 selesai, dites, dan di-push ke branch `claude/adoring-thompson-1l418n`. Sisa: 7, 8, 9, 10, 12.
+Butir 1–6 dan 11 selesai, dites, dan di-push ke branch `claude/adoring-thompson-1l418n`. Butir 7 dan 8 selesai di branch `fitur/album-tangan-penunjuk` (13 Nov). Sisa: 9, 10, 12.
+- **Album stiker (butir 7)**: `components/Album.tsx`, dibuka dari tombol "📒 Album Stiker" di layar Pilih Huruf dan dari ikon 📒 di pojok kanan atas layar menang. 26 kotak, belum didapat = gambar `brightness(0)` 16% (bayangan abu-abu), sudah didapat = berwarna + nama hewan. Semua kotak bisa diketuk (berdenyut + bunyi; yang belum ada memunculkan petunjuk "Selesaikan huruf X"). Stiker = `progress.done`, jadi tidak ada data baru di localStorage. Saat huruf **pertama kali** selesai, hewan level terbang dari Lio ke ikon album (`fly-sticker`) dan muncul tag "Stiker baru!".
+- **Tangan penunjuk (butir 8)**: `components/Hand.tsx`, digambar lewat portal ke `document.body` (supaya tidak ikut transform pembungkus animasi). Mencontohkan gerakan di awal tiap mini-game: mini 1 menelusuri awal goresan yang sedang aktif (dan contoh lagi saat masuk huruf kecil), mini 2 mengetuk 2 gelembung benar, mini 3a mengetuk 3 hewan lalu angka jawaban, mini 3b menunjuk bayangan lalu gambar yang cocok. Muncul lagi setelah 5 detik tanpa sentuhan; gerakannya pakai rAF sendiri supaya tetap jalan walau `prefers-reduced-motion`.
 - **Letak kode**: aplikasi Next.js ada di **akar repo** (bukan `/home/user/lio-app`). `app/` (layout, CSS), `components/` (layar + mini-game), `data/letters.ts` (26 huruf: hewan, warna, pengecoh), `data/glyphs.ts` (goresan kapital + kecil), `lib/` (engine tracing murni, audio, progres, flag).
 - **Perintah**: `npm run dev`, `npm run build` (hasil statis di `out/`), `npm test` (tes goresan), `npm run sheet` (lembar kontak `docs/lembar-huruf.png`), `npm run e2e -- A G` (main penuh di browser; butuh `out/` disajikan di port 4173), `npm run animals` (buat ulang WebP hewan).
 - **Font**: Grandstander (UI) + Andika (huruf belajar); keduanya a satu tangkai dan g ekor kait, dibundel lewat fontsource (tanpa Google Fonts saat runtime). Baloo 2 tidak dipakai lagi karena a-nya dua tingkat.

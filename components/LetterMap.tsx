@@ -15,12 +15,17 @@ const TILE_STYLE: [string, string][] = [
 ];
 
 /** Layar Pilih Huruf: semua A–Z terbuka, bebas pilih. Huruf yang selesai dapat bintang. */
-export default function LetterMap({ progress, onPick }: { progress: Progress; onPick: (i: number) => void }) {
+export default function LetterMap({ progress, onPick, onAlbum }: { progress: Progress; onPick: (i: number) => void; onAlbum: () => void }) {
   const stars = LETTERS.filter((l) => progress.done[l.ch]).length;
   return (
     <section id="map" className="screen on">
       <Pop><h2><span className="sparkle">Pilih Huruf</span></h2></Pop>
       <div className="legend">{stars > 0 ? `⭐ ${stars} dari 26 huruf selesai` : "Pilih huruf mana saja ya!"}</div>
+      <Pop delay={0.06}>
+        <button className="btn ghost map-album" id="btnAlbum" onClick={onAlbum} aria-label="Buka album stiker">
+          📒 Album Stiker <b>{stars}/26</b>
+        </button>
+      </Pop>
       <div className="grid" id="grid">
         {LETTERS.map((l, i) => {
           const locked = PAYWALL_ENABLED && i >= FREE_LETTERS;

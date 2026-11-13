@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { NUM, type Letter } from "@/data/letters";
 import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
 import Pop from "./Pop";
+import Hand, { centerOf, type HandPoint } from "./Hand";
 import type { PoseName } from "./Lio";
 
 /** Mini-game 3a: hitung hewan (3–6). Ketuk satu-satu untuk menghitung, lalu pilih angkanya. */
@@ -19,6 +20,15 @@ export default function CountGame({ letter, onDone, onSay, onPose }: Props) {
   const [order, setOrder] = useState<number[]>([]); // indeks hewan sesuai urutan diketuk
   const [wrong, setWrong] = useState<{ v: number; n: number }[]>([]);
   const [done, setDone] = useState(false);
+  const items = useRef<(HTMLButtonElement | null)[]>([]);
+  const optsEls = useRef<(HTMLButtonElement | null)[]>([]);
+  // Contoh gerakan tangan: menghitung tiga hewan pertama, lalu menunjuk jawabannya.
+  const demoPoints = () => {
+    const pts = Array.from({ length: Math.min(3, n) }, (_, i) => centerOf(items.current[i])).filter((p): p is HandPoint => !!p);
+    const ans = centerOf(optsEls.current[opts.indexOf(n)]);
+    if (ans) pts.push(ans);
+    return pts;
+  };
 
   function count(i: number) {
     audio();
@@ -51,7 +61,10 @@ export default function CountGame({ letter, onDone, onSay, onPose }: Props) {
           const k = order.indexOf(i);
           return (
             <Pop key={i} i={i} step={0.07}>
-            <button className={`qitem${k >= 0 ? " counted" : ""}`} onClick={() => count(i)} aria-label={word}>
+            <button
+              ref={(node) => { items.current[i] = node; }}
+              className={`qitem${k >= 0 ? " counted" : ""}`} onClick={() => count(i)} aria-label={word}
+            >
               <img src={letter.img} alt="" draggable={false} />
               {k >= 0 && <span className="n">{k + 1}</span>}
             </button>
@@ -64,13 +77,18 @@ export default function CountGame({ letter, onDone, onSay, onPose }: Props) {
           const w = wrong.find((x) => x.v === v);
           return (
             <Pop key={v} i={i} step={0.07} delay={0.45}>
-            <button key={w ? `w${w.n}` : "b"} className={`btn ghost qopt${w ? " wrong" : ""}`} onClick={() => answer(v)}>
+            <button
+              key={w ? `w${w.n}` : "b"}
+              ref={(node) => { optsEls.current[i] = node; }}
+              className={`btn ghost qopt${w ? " wrong" : ""}`} onClick={() => answer(v)}
+            >
               {v}
             </button>
             </Pop>
           );
         })}
       </div>
+      <Hand points={demoPoints} />
     </>
   );
 }

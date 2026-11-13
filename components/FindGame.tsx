@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { NUM, type Letter } from "@/data/letters";
 import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
 import Pop from "./Pop";
+import Hand, { centerOf, type HandPoint } from "./Hand";
 import type { PoseName } from "./Lio";
 
 /**
@@ -32,7 +33,11 @@ export default function FindGame({ letter, onDone, onSay, onPose }: Props) {
   const [colors] = useState(() => shuffle(BUBBLE_COLORS.filter((c) => c !== letter.color)));
   const [found, setFound] = useState<number[]>([]);
   const [wrong, setWrong] = useState<{ i: number; n: number } | null>(null);
+  const btns = useRef<(HTMLButtonElement | null)[]>([]);
   const total = 4;
+  // Contoh gerakan tangan: menunjuk dua gelembung yang benar.
+  const targets = cells.map((c, i) => (c === letter.ch || c === lo ? i : -1)).filter((i) => i >= 0).slice(0, 2);
+  const demoPoints = () => targets.map((i) => centerOf(btns.current[i])).filter((p): p is HandPoint => !!p);
 
   function tap(i: number) {
     audio();
@@ -59,6 +64,7 @@ export default function FindGame({ letter, onDone, onSay, onPose }: Props) {
   }
 
   return (
+    <>
     <div className="qgrid">
       {cells.map((c, i) => {
         const ok = found.includes(i);
@@ -66,6 +72,7 @@ export default function FindGame({ letter, onDone, onSay, onPose }: Props) {
           <Pop key={i} i={i} step={0.045} className="qcell">
           <button
             key={i + (wrong?.i === i ? `w${wrong.n}` : "")}
+            ref={(node) => { btns.current[i] = node; }}
             className={`qb${ok ? " found" : ""}${wrong?.i === i ? " wrong" : ""}`}
             style={{ backgroundColor: ok ? letter.color : colors[i % colors.length] }}
             onClick={() => tap(i)}
@@ -77,5 +84,7 @@ export default function FindGame({ letter, onDone, onSay, onPose }: Props) {
         );
       })}
     </div>
+    <Hand points={demoPoints} />
+    </>
   );
 }

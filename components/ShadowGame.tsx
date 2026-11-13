@@ -5,6 +5,7 @@ import { LETTERS, SHADOW_CONFUSABLE, type Letter } from "@/data/letters";
 import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
 import Pop from "./Pop";
+import Hand, { centerOf, type HandPoint } from "./Hand";
 import type { PoseName } from "./Lio";
 
 /**
@@ -35,8 +36,19 @@ export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
   const [wrong, setWrong] = useState<{ ch: string; n: number }[]>([]);
   const [solved, setSolved] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const optsEls = useRef<(HTMLButtonElement | null)[]>([]);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const { target, opts } = rounds[r];
+  // Contoh gerakan tangan: menunjuk bayangannya, lalu gambar yang cocok.
+  const demoPoints = () => {
+    const pts: HandPoint[] = [];
+    const a = centerOf(stage.current);
+    const b = centerOf(optsEls.current[opts.findIndex((o) => o.ch === target.ch)]);
+    if (a) pts.push(a);
+    if (b) pts.push(b);
+    return pts;
+  };
 
   function pick(o: Letter) {
     audio();
@@ -65,7 +77,7 @@ export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
 
   return (
     <>
-      <div className="shadow-stage" data-word={target.word}>
+      <div className="shadow-stage" ref={stage} data-word={target.word}>
         <div className="shadow-rounds">
           {rounds.map((_, i) => <span key={i} className={i < r || (i === r && solved) ? "done" : i === r ? "on" : ""} />)}
         </div>
@@ -80,6 +92,7 @@ export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
             <Pop key={`${r}${o.ch}`} i={i} step={0.08} delay={0.25}>
             <button
               key={w ? `w${w.n}` : "b"}
+              ref={(node) => { optsEls.current[i] = node; }}
               className={`btn ghost qopt shadow-opt${w ? " wrong" : ""}${solved && o.ch === target.ch ? " right" : ""}`}
               onClick={() => pick(o)}
               aria-label={o.word}
@@ -90,6 +103,7 @@ export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
           );
         })}
       </div>
+      <Hand points={demoPoints} />
     </>
   );
 }

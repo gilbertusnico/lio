@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { BUY_URL } from "@/lib/config";
 import Leaves from "./Leaves";
+import Emo from "./Emo";
 
 /** Popup beli. Hanya tampil kalau PAYWALL_ENABLED = true (lib/config.ts). */
 export default function Paywall({ fromWin, onClose }: { fromWin: boolean; onClose: () => void }) {
@@ -12,7 +13,7 @@ export default function Paywall({ fromWin, onClose }: { fromWin: boolean; onClos
     <motion.div className="overlay light on" id="pay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <Leaves />
       <div className="panel">
-        <div className={`pay-lock${fromWin ? " win" : ""}`}>{fromWin ? "🏆" : "🔒"}</div>
+        <div className={`pay-lock${fromWin ? " win" : ""}`}><Emo name={fromWin ? "trophy" : "lock"} /></div>
         <h3 className="pay-title">{fromWin ? "Hore, 3 huruf selesai!" : "Huruf D–Z masih terkunci"}</h3>
         <ul className="pay-list">
           <li><b>✓</b> Semua huruf A–Z</li>

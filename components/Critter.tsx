@@ -2,6 +2,8 @@
 
 import type { Letter } from "@/data/letters";
 import type { PoseName } from "./Lio";
+import { audio, sfx } from "@/lib/audio";
+import { poke } from "@/lib/poke";
 
 /**
  * Hewan huruf yang jalan (atau melayang) bolak-balik di atas tepi papan.
@@ -13,7 +15,10 @@ export default function Critter({ letter, pose, n }: { letter: Letter; pose: Pos
     <div className="critter on" aria-hidden>
       <div className="cw">
         <div key={n} className={`cr ${react}`}>
-          <img className={`ce ${letter.motion}`} src={letter.img} alt="" draggable={false} />
+          <img
+            className={`ce ${letter.motion} pokeable`} src={letter.img} alt="" draggable={false}
+            onPointerDown={(e) => { audio(); sfx.pop(); poke(e.currentTarget.parentElement, "hop", 650); }}
+          />
         </div>
       </div>
     </div>

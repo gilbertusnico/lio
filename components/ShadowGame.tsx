@@ -15,7 +15,7 @@ import type { PoseName } from "./Lio";
  * Dua ronde pertama hewan lain (supaya tidak bisa ditebak dari hewan yang jalan-jalan di papan),
  * ronde terakhir hewan huruf ini.
  */
-type Props = { letter: Letter; onDone: () => void; onSay: (t: string) => void; onPose: (p: PoseName) => void };
+type Props = { letter: Letter; onDone: () => void; onSay: (t: string) => void; onPose: (p: PoseName) => void; ask?: number };
 type Round = { target: Letter; opts: Letter[] };
 const ROUNDS = 3;
 const nameOf = (l: Letter) => (l.word === "Lio" ? "Lio" : l.word.toLowerCase());
@@ -32,7 +32,7 @@ export function makeRounds(letter: Letter): Round[] {
   return [...warmups, letter].map(makeRound);
 }
 
-export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
+export default function ShadowGame({ letter, onDone, onSay, onPose, ask = 0 }: Props) {
   const [rounds] = useState(() => makeRounds(letter));
   const [r, setR] = useState(0);
   const [wrong, setWrong] = useState<{ ch: string; n: number }[]>([]);
@@ -136,7 +136,7 @@ export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
           );
         })}
       </div>
-      <Hand demo={demo} restart={r} now={hint} delay={1200} />
+      <Hand demo={demo} restart={r} now={hint + ask} delay={1200} />
     </>
   );
 }

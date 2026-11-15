@@ -14,6 +14,8 @@ import Fx, { type FxHandle } from "./Fx";
 import Paywall from "./Paywall";
 import Album from "./Album";
 import Icon from "./Icon";
+import Emo from "./Emo";
+import { poke } from "@/lib/poke";
 import { LIO_POSES, lioSrc, type PoseName } from "./Lio";
 
 type Screen = "start" | "map" | "play";
@@ -32,6 +34,7 @@ export default function Game() {
   const [win, setWin] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [album, setAlbum] = useState(false);
+  const [resetAsk, setResetAsk] = useState(false);
   const [newSticker, setNewSticker] = useState(false);
   const [fly, setFly] = useState<{ from: DOMRect; to: DOMRect } | null>(null);
   const [flash, setFlash] = useState({ round: -1, n: 0 }); // centang "selesai" untuk mini-game di ronde ini
@@ -49,6 +52,7 @@ export default function Game() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const L = LETTERS[cur];
   const stickerCount = LETTERS.filter((l) => progress.done[l.ch]).length;
+  const allDone = stickerCount === LETTERS.length;
 
   // localStorage baru bisa dibaca setelah halaman statis dihidupkan di browser.
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -70,6 +74,42 @@ export default function Game() {
     return () => clearTimeout(t);
   }, [win, newSticker]);
   useEffect(() => { leavingRef.current = leaving; });
+
+  // ---- Anti kepencet (butir 10) ----
+  // Tombol back HP mundur satu layar di dalam game, tidak langsung keluar dari halaman.
+  const backRef = useRef<() => boolean>(() => false);
+  useEffect(() => {
+    backRef.current = () => {
+      if (resetAsk) { setResetAsk(false); return true; }
+      if (album) { setAlbum(false); return true; }
+      if (pay) { setPay(null); return true; }
+      if (leaving) { setLeaving(false); const fn = pending.current; pending.current = null; fn?.(); return true; }
+      if (win) { goMap(); return true; }
+      if (intro) { setIntro(false); return true; }
+      if (screen === "play") { setLeaving(true); return true; }
+      if (screen === "map") { setScreen("start"); return true; }
+      return false; // di cover: biarkan browser keluar seperti biasa
+    };
+  });
+  useEffect(() => {
+    history.pushState({ lio: 1 }, "");
+    const onPop = () => { if (backRef.current()) history.pushState({ lio: 1 }, ""); };
+    // Menu "Simpan gambar" saat ditekan lama, cubit-zoom dan ketuk-dua-kali-zoom di iPhone.
+    const block = (e: Event) => e.preventDefault();
+    const pinch = (e: TouchEvent) => { if (e.touches.length > 1) e.preventDefault(); };
+    window.addEventListener("popstate", onPop);
+    document.addEventListener("contextmenu", block);
+    document.addEventListener("gesturestart", block);
+    document.addEventListener("dblclick", block);
+    document.addEventListener("touchmove", pinch, { passive: false });
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      document.removeEventListener("contextmenu", block);
+      document.removeEventListener("gesturestart", block);
+      document.removeEventListener("dblclick", block);
+      document.removeEventListener("touchmove", pinch);
+    };
+  }, []);
 
   const say = useCallback((t: string) => setBubble(t), []);
   const setPose = useCallback((name: PoseName) => setPoseState((p) => ({ name, n: p.n + 1 })), []);
@@ -159,7 +199,7 @@ export default function Game() {
           <motion.div key="start" {...fade}>
             <Cover
               onStart={() => { audio(); if (musicOn) startMusic(); setScreen("map"); }}
-              onReset={resetProgress}
+              onAskReset={() => setResetAsk(true)}
             />
           </motion.div>
         )}
@@ -187,7 +227,10 @@ export default function Game() {
             <div className="panel">
               <div className="intro-row">
                 <div className="intro-letter" style={{ color: L.color }}>{L.ch} {L.ch.toLowerCase()}</div>
-                <img className="big-emoji" src={L.img} alt={L.word} draggable={false} />
+                <img
+                  className="big-emoji pokeable" src={L.img} alt={L.word} draggable={false}
+                  onPointerDown={(e) => { audio(); sfx.pop(); poke(e.currentTarget, "poke"); }}
+                />
               </div>
               <h3 className="intro-word">{L.ch} untuk {L.word}</h3>
               <div className="row" style={{ justifyContent: "center", marginTop: 12 }}>
@@ -208,7 +251,7 @@ export default function Game() {
               <h3 className="leave-title">Berhenti main?</h3>
               <div className="leave-btns">
                 <button className="btn green" id="leaveNo" onClick={() => { setLeaving(false); const fn = pending.current; pending.current = null; fn?.(); }}><Icon name="play" /> Lanjut main</button>
-                <button className="btn ghost" id="leaveYes" onClick={goMap}>🗺️ Keluar</button>
+                <button className="btn ghost" id="leaveYes" onClick={goMap}><Emo name="map" /> Keluar</button>
               </div>
             </div>
           </motion.div>
@@ -240,9 +283,14 @@ export default function Game() {
             >
               <img src="/ui/album.webp" alt="" draggable={false} /> <b>{stickerCount - (newSticker && !landed ? 1 : 0)}</b>
             </button>
+            <button className={`btn ghost icon-btn music-btn win-music${musicOn ? "" : " off"}`} aria-label="Musik" onClick={toggleMusic}>
+              <Emo name={musicOn ? "music" : "mute"} />
+            </button>
             <div className="panel">
               <div className="win-row">
-                <img className="lio lio-win" src={lioSrc("lompat")} alt="Lio" draggable={false} />
+                <span className="pokeable" onPointerDown={(e) => { audio(); sfx.boing(); poke(e.currentTarget, "poke-up"); }}>
+                  <img className="lio lio-win" src={lioSrc("lompat")} alt="Lio" draggable={false} />
+                </span>
                 {newSticker && (
                   <motion.div
                     className="new-sticker"
@@ -255,14 +303,21 @@ export default function Game() {
                   </motion.div>
                 )}
               </div>
-              <h3 id="winText">Huruf {L.ch} selesai!</h3>
-              <div className="stars"><span>⭐</span><span>⭐</span><span>⭐</span></div>
+              <h3 id="winText">{allDone ? "Hebat! Semua huruf selesai!" : `Huruf ${L.ch} selesai!`}</h3>
+              <div className="stars">
+                {[0, 1, 2].map((i) => (
+                  <span key={i} className="pokeable" onPointerDown={(e) => { audio(); sfx.ding(); poke(e.currentTarget, "poke-spin", 500); }}>
+                    <Emo name={allDone && i === 1 ? "trophy" : "star"} />
+                  </span>
+                ))}
+              </div>
               <div className="row" style={{ justifyContent: "center", marginTop: 16 }}>
                 <button className="btn ghost" id="winRetry" onClick={() => { setWin(false); resetSticker(); setMini3(pickMini3(mini3)); startGame(0); }}><Icon name="retry" /> Lagi</button>
                 <button
                   className="btn green" id="winNext"
                   onClick={() => {
                     if (PAYWALL_ENABLED && cur + 1 >= FREE_LETTERS) { setWin(false); setScreen("map"); setPay("win"); }
+                    else if (allDone) { goMap(); setAlbum(true); } // semua stiker terkumpul: tunjukkan albumnya
                     else if (cur < LETTERS.length - 1) startLetter(cur + 1);
                     else goMap();
                   }}
@@ -281,19 +336,36 @@ export default function Game() {
 
       {screen === "map" && !intro && (
         <button className="btn ghost icon-btn home-float" id="btnHome" style={{ display: "block" }} aria-label="Kembali ke beranda" onClick={() => { audio(); setScreen("start"); }}>
-          🏠
+          <Emo name="home" />
         </button>
       )}
       {screen !== "play" && (
         <button className={`btn ghost icon-btn music-btn music-float${musicOn ? "" : " off"}`} aria-label="Musik" onClick={toggleMusic}>
-          {musicOn ? "🎵" : "🔇"}
+          <Emo name={musicOn ? "music" : "mute"} />
         </button>
       )}
       <Fx ref={fx} />
 
+      {/* Konfirmasi reset progres (untuk orang tua; dibuka dengan menekan lama logo "Lio" 3 detik) */}
+      <AnimatePresence>
+        {resetAsk && (
+          <motion.div key="reset" className="overlay on" id="reset" {...fade}>
+            <div className="panel">
+              <img className="leave-lio" src={lioSrc("sedih")} alt="" draggable={false} />
+              <h3 className="leave-title">Hapus semua bintang dan stiker?</h3>
+              <p className="small">Untuk orang tua: semua huruf akan kembali seperti baru.</p>
+              <div className="leave-btns">
+                <button className="btn green" id="resetNo" onClick={() => setResetAsk(false)}>Jangan</button>
+                <button className="btn ghost" id="resetYes" onClick={() => { resetProgress(); setResetAsk(false); sfx.pop(); }}>Ya, hapus</button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* HP dimiringkan: minta diputar tegak (tampil lewat CSS, lihat .rotate-hint) */}
       <div className="rotate-hint" aria-hidden>
-        <div className="rotate-phone">📱</div>
+        <div className="rotate-phone"><Emo name="phone" /></div>
         <img src={lioSrc("menunjuk")} alt="" draggable={false} />
         <p>Putar HP-nya dulu ya!</p>
       </div>

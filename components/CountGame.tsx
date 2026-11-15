@@ -9,10 +9,10 @@ import Hand, { centerOf, type HandDemo, type HandPoint } from "./Hand";
 import type { PoseName } from "./Lio";
 
 /** Mini-game 3a: hitung hewan (3–6). Ketuk satu-satu untuk menghitung, lalu pilih angkanya. */
-type Props = { letter: Letter; onDone: () => void; onSay: (t: string) => void; onPose: (p: PoseName) => void };
+type Props = { letter: Letter; onDone: () => void; onSay: (t: string) => void; onPose: (p: PoseName) => void; ask?: number };
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
-export default function CountGame({ letter, onDone, onSay, onPose }: Props) {
+export default function CountGame({ letter, onDone, onSay, onPose, ask = 0 }: Props) {
   const word = letter.word === "Lio" ? "Lio" : letter.word.toLowerCase();
   const [n] = useState(() => 3 + Math.floor(Math.random() * 4));
   // Dua pengecoh diambil acak dari n-2…n+2, supaya jawaban benar tidak selalu angka yang di tengah.
@@ -90,7 +90,7 @@ export default function CountGame({ letter, onDone, onSay, onPose }: Props) {
           );
         })}
       </div>
-      <Hand demo={demo} />
+      <Hand demo={demo} now={ask} />
     </>
   );
 }

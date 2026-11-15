@@ -267,3 +267,53 @@ button.step { display: flex; align-items: center; justify-content: center; }
 .shadow-stage { transition: background .2s, box-shadow .2s; }
 .shadow-stage.waiting { box-shadow: inset 0 0 0 4px rgba(255,201,60,.55); }
 .shadow-stage.over { background: radial-gradient(circle at 50% 45%, #ffe9a3 0%, #fff7dc 75%); box-shadow: inset 0 0 0 5px #ffc93c; }
+
+/* ===== Butir 9, 10, 12 (15 Nov) ===== */
+/* Ikon Noto yang dibundel */
+.emo { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.22em; object-fit: contain; pointer-events: none; }
+.emo.flip { transform: scaleX(-1); }
+.icon-btn .emo { width: 30px; height: 30px; vertical-align: middle; }
+button.step .emo { width: 28px; height: 28px; }
+.emo.step-shadow { filter: brightness(0); opacity: .7; }
+.stars .emo { width: 52px; height: 52px; }
+.stars span { margin: 0 3px; }
+.pay-lock .emo { width: 56px; height: 56px; }
+.tile .lock .emo { width: 16px; height: 16px; }
+.rotate-phone .emo { width: 72px; height: 72px; }
+.win-music { position: fixed; top: max(16px, env(safe-area-inset-top)); left: 16px; z-index: 7; }
+
+/* Semua bisa diketuk: reaksi singkat lewat properti tersendiri, tidak mengganggu animasi transform */
+.pokeable { pointer-events: auto; cursor: pointer; transition: scale .2s cubic-bezier(.2,1.8,.4,1), translate .2s cubic-bezier(.2,1.6,.4,1), rotate .45s ease-out; }
+.pokeable.poke { scale: 1.22; }
+.pokeable.poke-big { scale: 1.8; }
+.pokeable.poke-up { translate: 0 -26px; scale: 1.06; }
+.pokeable.poke-spin { rotate: 360deg; scale: 1.25; }
+.leaves { pointer-events: none; }
+/* Layar tidak menutupi daun sudut: hanya isi layar yang menangkap sentuhan */
+#map.screen, #play.screen { pointer-events: none; }
+#map.screen > *, #play.screen > * { pointer-events: auto; }
+.sky-cloud.pokeable { z-index: 1; }
+.butterfly { pointer-events: none; } .butterfly .pokeable { pointer-events: auto; }
+.lio-tap { display: block; flex: none; }
+.win-row > .pokeable { display: inline-block; }
+.critter img.ce.pokeable { pointer-events: auto; }
+.lio.lio-talk, .lio.lio-win { pointer-events: none; }
+.stars span.pokeable { animation: pop .4s cubic-bezier(.2,1.6,.4,1) both; }
+
+/* Pilih Huruf: huruf berikutnya yang belum selesai berdenyut pelan */
+#map .tile.next { animation: tileNext 1.6s ease-in-out 1.2s infinite; }
+@keyframes tileNext { 0%, 100% { scale: 1; } 50% { scale: 1.09; } }
+
+/* Reset progres: lingkaran terisi selama logo "Lio" ditekan */
+.hold-ring { position: absolute; left: 50%; top: 56%; width: 1.15em; height: 1.15em; margin: -.575em 0 0 -.575em; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(#ff7a1f var(--a, 0deg), rgba(255,255,255,.0) 0); -webkit-mask: radial-gradient(circle, transparent 60%, #000 62%); mask: radial-gradient(circle, transparent 60%, #000 62%);
+  animation: holdFill linear forwards; opacity: .9; }
+@property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes holdFill { from { --a: 0deg; } to { --a: 360deg; } }
+#reset .small { margin: -4px 0 14px; }
+
+/* Anti kepencet: tidak ada menu tekan-lama, sorotan, atau tarik-refresh */
+* { -webkit-touch-callout: none; }
+html, body { overscroll-behavior: none; position: fixed; inset: 0; width: 100%; }
+.album-grid, #map .grid { overscroll-behavior: contain; }
+@media (prefers-reduced-motion: reduce) { #map .tile.next { animation: none; } }

@@ -25,9 +25,9 @@ export function makeCells(letter: Letter): string[] {
   return shuffle([letter.ch, letter.ch, lo, lo, ...picked, rest[0]]);
 }
 
-type Props = { letter: Letter; onDone: () => void; onSay: (t: string) => void; onPose: (p: PoseName) => void };
+type Props = { letter: Letter; onDone: () => void; onSay: (t: string) => void; onPose: (p: PoseName) => void; ask?: number };
 
-export default function FindGame({ letter, onDone, onSay, onPose }: Props) {
+export default function FindGame({ letter, onDone, onSay, onPose, ask = 0 }: Props) {
   const lo = letter.ch.toLowerCase();
   const [cells] = useState(() => makeCells(letter));
   const [colors] = useState(() => shuffle(BUBBLE_COLORS.filter((c) => c !== letter.color)));
@@ -88,7 +88,7 @@ export default function FindGame({ letter, onDone, onSay, onPose }: Props) {
         );
       })}
     </div>
-    <Hand demo={demo} />
+    <Hand demo={demo} now={ask} />
     </>
   );
 }

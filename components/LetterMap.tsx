@@ -4,6 +4,7 @@ import { LETTERS } from "@/data/letters";
 import { FREE_LETTERS, PAYWALL_ENABLED } from "@/lib/config";
 import type { Progress } from "@/lib/progress";
 import Pop from "./Pop";
+import Emo from "./Emo";
 
 const TILE_STYLE: [string, string][] = [
   ["linear-gradient(180deg,#ffa24f,#ff7417)", "#d4560a"],
@@ -17,6 +18,8 @@ const TILE_STYLE: [string, string][] = [
 /** Layar Pilih Huruf: semua A–Z terbuka, bebas pilih. Huruf yang selesai dapat bintang. */
 export default function LetterMap({ progress, onPick, onAlbum }: { progress: Progress; onPick: (i: number) => void; onAlbum: () => void }) {
   const stars = LETTERS.filter((l) => progress.done[l.ch]).length;
+  // Huruf pertama yang belum selesai berdenyut pelan: ajakan "main yang ini" untuk anak yang belum bisa membaca.
+  const next = LETTERS.findIndex((l) => !progress.done[l.ch]);
   return (
     <section id="map" className="screen on">
       <Pop><h2><span className="sparkle">Pilih Huruf</span></h2></Pop>
@@ -29,17 +32,18 @@ export default function LetterMap({ progress, onPick, onAlbum }: { progress: Pro
       <div className="grid-fit"><div className="grid" id="grid">
         {LETTERS.map((l, i) => {
           const locked = PAYWALL_ENABLED && i >= FREE_LETTERS;
+          const isNext = i === next;
           const [bg, shadow] = TILE_STYLE[i % TILE_STYLE.length];
           return (
             <Pop key={l.ch} i={i} step={0.022} delay={0.08} className="tile-wrap">
             <button
-              className={`tile${locked ? " locked" : ""}`}
+              className={`tile${locked ? " locked" : ""}${isNext ? " next" : ""}`}
               style={locked ? undefined : { background: bg, boxShadow: `0 6px 0 ${shadow}` }}
               onClick={() => onPick(i)}
               aria-label={`Huruf ${l.ch}${progress.done[l.ch] ? ", sudah selesai" : ""}`}
             >
               {l.ch}
-              {locked ? <span className="lock">🔒</span> : progress.done[l.ch] && <img className="badge" src="/ui/star.webp" alt="" draggable={false} />}
+              {locked ? <span className="lock"><Emo name="lock" /></span> : progress.done[l.ch] && <img className="badge" src="/ui/star.webp" alt="" draggable={false} />}
             </button>
             </Pop>
           );

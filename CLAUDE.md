@@ -194,10 +194,10 @@ Isi prototipe:
 - [x] 6. Bundel **Noto Emoji** sebagai gambar (cek lisensi, unduh hanya 23 hewan yang dipakai, WebP kecil); pasang quokka/xerus/yak/Lio dari `assets/`.
 - [x] 7. **Album stiker** (tombol 📒, 26 kotak, bayangan abu-abu → berwarna, hewan terbang ke album saat menang).
 - [x] 8. **Tangan penunjuk** (contoh gerakan tiap awal mini-game; muncul lagi saat diam 5 detik).
-- [ ] 9. **Semua bisa diketuk** (Lio, hewan, awan, daun bereaksi) + animasi Motion untuk transisi layar, popup, tombol.
-- [ ] 10. **Anti kepencet**: kunci zoom/tarik-refresh, tombol back HP, reset progres lewat tekan-lama logo (3 detik + konfirmasi), sembunyikan tag PROTOTIPE.
+- [x] 9. **Semua bisa diketuk** (Lio, hewan, awan, daun bereaksi) + animasi Motion untuk transisi layar, popup, tombol.
+- [x] 10. **Anti kepencet**: kunci zoom/tarik-refresh, tombol back HP, reset progres lewat tekan-lama logo (3 detik + konfirmasi), sembunyikan tag PROTOTIPE.
 - [x] 11. Pindahkan cover, peta huruf, kartu pembuka, layar menang dari prototipe (tema hutan, animasi cover); paywall disembunyikan lewat satu flag.
-- [ ] 12. Polesan UI/UX, komponen 21st.dev seperlunya, tes di layar 360×640 / 390×844 / tablet, tanpa error JS.
+- [x] 12. Polesan UI/UX, komponen 21st.dev seperlunya, tes di layar 360×640 / 390×844 / tablet, tanpa error JS.
 
 ### Status versi Next.js (11 Nov 2026, sesi "mulai dev")
 Butir 1–6 dan 11 selesai, dites, dan di-push ke branch `claude/adoring-thompson-1l418n`. Butir 7 dan 8 selesai di branch `fitur/album-tangan-penunjuk` (13 Nov). Sisa: 9, 10, 12.
@@ -227,6 +227,12 @@ Butir 1–6 dan 11 selesai, dites, dan di-push ke branch `claude/adoring-thompso
   - **Layar menang**: fanfare lebih panjang (`sfx.win()`), Lio naik-turun terus (`winBob`).
   - **Ikon teks diganti SVG** (`components/Icon.tsx`): ↩ ↺ ▶ ➜ ✅ tampil beda di iOS (emoji kotak biru) dan Android. Jangan pakai karakter itu lagi di tombol.
   - **Pilih Huruf tidak bisa digulir**: kotak huruf menyesuaikan tinggi layar lewat container query (`.grid-fit`), `overflow: visible`. Dites sampai 360×560.
+- **Butir 9, 10, 12 selesai (15 Nov)**. Semua butir 1–12 sekarang tercentang.
+  - **Butir 9**: hiasan cover (Lio, awan, semak, batu, kupu-kupu, daun sudut), hewan di atas papan, Lio di layar main dan menang, bintang, dan gambar di kartu pembuka bereaksi saat diketuk. Pakai kelas `.pokeable` + `poke()` di `lib/poke.ts`; reaksinya lewat properti `scale`/`translate`/`rotate` supaya tidak bentrok dengan animasi `transform`. **Lio di layar main diketuk = tangan penunjuk mencontohkan lagi** (prop `ask`).
+  - **Butir 10**: tombol back HP mundur satu layar (`backRef` + `history.pushState` di `components/Game.tsx`); menu tekan-lama, cubit-zoom, dan ketuk-dua-kali-zoom diblokir; `body` dikunci (`position: fixed`, `overscroll-behavior: none`). Reset progres: lingkaran terisi 3 detik di logo "Lio", lalu dialog bergaya game (`#reset`), bukan `window.confirm`.
+  - **Butir 12**: semua ikon antarmuka yang tadinya emoji bawaan HP diganti gambar Noto yang dibundel (`components/Emo.tsx`, `public/ui/`, `npm run ui`); ikon langkah ketiga untuk "bayangan" = siluet hewan huruf itu. Tombol musik di layar menang. Saat 26 huruf selesai: judul "Hebat! Semua huruf selesai!", piala, dan Lanjut membuka album. Huruf pertama yang belum selesai berdenyut di Pilih Huruf. Musik latar punya melodi kedua dan variasi oktaf (±37 detik sekali putar). Manifest PWA (`app/manifest.ts`, tampilan tegak), `README.md`, `engines` di `package.json`.
+  - **Komponen 21st.dev tidak dipakai**: semua kebutuhan sudah ada dengan gaya hutan sendiri.
+  - **Sisa dari laporan QA**: QA-02 (Playwright tidak dipasang bersama proyek; caranya ada di README), UX-07 (ekspor/pindah progres), A11Y-01, A11Y-02, A11Y-04 (pembaca layar dan fokus keyboard), TECH-02 (CSS mati di `legacy.css`), CI.
 - **Belum dites di HP asli.** Semua tes memakai Chromium headless (360×640, 390×844, 768×1024).
 
 ### Catatan untuk model berikutnya

@@ -11,6 +11,9 @@ import Critter from "./Critter";
 import { motion } from "motion/react";
 import Pop from "./Pop";
 import Icon from "./Icon";
+import Emo from "./Emo";
+import { audio, sfx } from "@/lib/audio";
+import { poke } from "@/lib/poke";
 import { LioTalk, type PoseName } from "./Lio";
 
 type Props = {
@@ -50,6 +53,7 @@ export default function PlayScreen(p: Props) {
   const [trace, setTrace] = useState({ round: -1, lower: false, n: 0 });
   const tr = trace.round === p.round ? trace : { round: p.round, lower: false, n: 0 };
   const said = useRef(-1);
+  const [ask, setAsk] = useState(0); // naik tiap Lio diketuk → tangan penunjuk mencontohkan lagi
 
   useEffect(() => {
     const fit = () => setSize(boardSize());
@@ -58,7 +62,12 @@ export default function PlayScreen(p: Props) {
     return () => window.removeEventListener("resize", fit);
   }, []);
 
-  const steps = ["✏️", "🔍", mini3 === "count" ? "🔢" : "🌗"];
+  // Ikon langkah: pensil, kaca pembesar, lalu angka (hitung) atau bayangan hewan huruf ini (cocokkan bayangan).
+  const steps = [
+    <Emo key="a" name="pencil" />,
+    <Emo key="b" name="find" />,
+    mini3 === "count" ? <Emo key="c" name="count" /> : <img key="c" className="emo step-shadow" src={L.img} alt="" draggable={false} />,
+  ];
   const title = [
     `Tebalkan huruf ${L.ch}`,
     `Ketuk semua ${L.ch} dan ${lo}!`,
@@ -75,15 +84,15 @@ export default function PlayScreen(p: Props) {
       onSay(mini3 === "count" ? `Ada berapa ${word}? Ketuk satu-satu untuk menghitung, lalu pilih angkanya.` : "Seret gambar yang cocok ke bayangannya!");
   }, [round, game, mini3, L, lo, word, onSay]);
 
-  const common = { letter: L, onDone: p.onGameDone, onSay: p.onSay, onPose: p.onPose };
+  const common = { letter: L, onDone: p.onGameDone, onSay: p.onSay, onPose: p.onPose, ask };
 
   return (
     <section id="play" className="screen on">
       <Pop className="top" from={0.8}>
-        <button className="btn ghost icon-btn" id="btnBack" aria-label="Kembali ke Pilih Huruf" onClick={p.onBack}>🗺️</button>
+        <button className="btn ghost icon-btn" id="btnBack" aria-label="Kembali ke Pilih Huruf" onClick={p.onBack}><Emo name="map" /></button>
         <div className="title" id="playTitle">{title}</div>
         <button className={`btn ghost icon-btn music-btn${p.musicOn ? "" : " off"}`} aria-label="Musik" onClick={p.onToggleMusic}>
-          {p.musicOn ? "🎵" : "🔇"}
+          <Emo name={p.musicOn ? "music" : "mute"} />
         </button>
       </Pop>
       <div className="steps" id="steps">
@@ -114,7 +123,7 @@ export default function PlayScreen(p: Props) {
           <Pop key={`t${p.round}-${tr.n}`} from={0.85}>
           <TraceBoard
             key={`${p.round}-${tr.n}`} letter={L} size={size}
-            startLower={tr.lower} onLower={() => setTrace({ ...tr, lower: true })}
+            ask={ask} startLower={tr.lower} onLower={() => setTrace({ ...tr, lower: true })}
             onDone={p.onGameDone} onSay={p.onSay} onPose={p.onPose}
             onOops={() => {
               // Papan goyang tanpa membuat ulang papan, supaya goresan yang sudah jadi tidak hilang.
@@ -150,7 +159,10 @@ export default function PlayScreen(p: Props) {
         ))}
       </div>
       <Pop className="talk" delay={0.3} from={0.7}>
-        <LioTalk pose={p.pose.name} n={p.pose.n} />
+        {/* Lio bisa diketuk: melompat, dan tangan penunjuk mencontohkan lagi apa yang harus dilakukan */}
+        <span className="pokeable lio-tap" onPointerDown={(e) => { audio(); sfx.boing(); poke(e.currentTarget, "poke-up"); setAsk((n) => n + 1); }}>
+          <LioTalk pose={p.pose.name} n={p.pose.n} />
+        </span>
         <div className="bubble" id="bubble">{p.bubble}</div>
         {/* Ulangi: ikon kecil di samping gelembung, jauh dari papan supaya tidak kepencet saat menggores */}
         <button

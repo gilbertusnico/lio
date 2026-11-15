@@ -18,7 +18,7 @@ async function icon(size, rounded) {
   const mask = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect width="${size}" height="${size}" rx="${r}"/></svg>`);
   return sharp(bg)
     .composite([{ input: face, left: Math.round((size - inner) / 2), top: size - inner }, { input: mask, blend: "dest-in" }])
-    .png()
+    .png({ palette: true, quality: 92 })
     .toBuffer();
 }
 
@@ -42,6 +42,9 @@ function ico(pngs) {
 }
 
 fs.writeFileSync("app/icon.png", await icon(192, true));
+fs.mkdirSync("public/icons", { recursive: true });
+fs.writeFileSync("public/icons/icon-192.png", await icon(192, false));
+fs.writeFileSync("public/icons/icon-512.png", await icon(512, false));
 fs.writeFileSync("app/apple-icon.png", await icon(180, false)); // iOS membulatkan sendiri
 fs.writeFileSync("app/favicon.ico", ico([{ size: 32, buf: await icon(32, true) }, { size: 48, buf: await icon(48, true) }]));
 console.log("ikon dibuat");

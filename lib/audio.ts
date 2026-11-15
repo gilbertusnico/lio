@@ -44,6 +44,21 @@ export const sfx = {
     tone(1319, 0.34, "triangle", 0.22, 0.22);
     [2093, 2637, 3136].forEach((f, i) => tone(f, 0.12, "sine", 0.07, 0.3 + i * 0.06));
   },
+  /** Lio/hewan melompat. */
+  boing() {
+    const a = audio();
+    if (!a) return;
+    const t = a.currentTime, o = a.createOscillator(), g = a.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(260, t);
+    o.frequency.exponentialRampToValueAtTime(720, t + 0.16);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.3);
+  },
+  /** Daun/semak berdesir. */
+  rustle() { for (let i = 0; i < 4; i++) tone(2600 + Math.random() * 2200, 0.05, "sine", 0.035, i * 0.035); },
   /** Stiker/hadiah mendarat. */
   pop() { tone(520, 0.08, "sine", 0.2); tone(1040, 0.14, "sine", 0.16, 0.05); },
   /** Huruf selesai: fanfare meriah ±2,4 detik (arpeggio naik, akor panjang, bass, gemerincing). */
@@ -67,6 +82,13 @@ const MEL = [
   72, -1, 69, -1, 72, -1, 76, -1, 74, -1, -1, 72, 69, -1, -1, -1,
   69, -1, 72, -1, 74, -1, 72, -1, 69, -1, 67, -1, 69, 72, -1, -1,
   74, -1, 76, -1, 79, -1, 76, 74, 72, -1, 74, -1, 67, -1, -1, -1,
+];
+// Bagian kedua melodi (dimainkan bergantian dengan yang pertama supaya tidak terasa mengulang terus).
+const MEL_B = [
+  76, -1, -1, 79, 76, -1, 72, -1, 74, -1, 76, -1, 79, -1, -1, -1,
+  76, -1, 72, -1, 69, -1, 72, -1, 76, -1, 74, -1, 72, -1, -1, -1,
+  72, -1, 69, -1, 65, -1, 69, -1, 72, -1, -1, 69, 72, 74, -1, -1,
+  79, -1, 76, -1, 74, -1, 71, -1, 74, -1, 72, -1, 72, -1, -1, -1,
 ];
 const hz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 let mGain: GainNode | null = null;
@@ -102,7 +124,9 @@ function schedule() {
   if (!ac || !mGain) return;
   while (mNext < ac.currentTime + 0.2) {
     const i = mStep % 64, ch = CHORDS[Math.floor(i / 16)], t = mNext;
-    if (MEL[i] >= 0) note(t, MEL[i], 0.35, "triangle", 0.22, mGain);
+    // Urutan 4 putaran: melodi A, melodi B, A satu oktaf lebih tinggi dan lembut, lalu B (±37 detik sekali putar).
+    const pass = Math.floor(mStep / 64) % 4, mel = pass % 2 ? MEL_B : MEL;
+    if (mel[i] >= 0) note(t, mel[i] + (pass === 2 ? 12 : 0), 0.35, "triangle", pass === 2 ? 0.14 : 0.22, mGain);
     if (i % 16 === 0 || i % 16 === 10) note(t, ch[0] - 12, 0.5, "sine", 0.35, mGain);
     if (i % 4 === 2) ch.forEach((m) => note(t, m + 12, 0.18, "sine", 0.05, mGain!));
     if (i % 2 === 0) shaker(t, i % 4 === 2 ? 0.05 : 0.025, mGain);

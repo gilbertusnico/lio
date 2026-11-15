@@ -26,6 +26,8 @@ type Props = {
   onStrokes: (info: { total: number; done: number }) => void;
   /** Mulai langsung dari huruf kecil (dipakai tombol Ulangi saat anak sudah sampai huruf kecil). */
   startLower?: boolean;
+  /** Naik tiap anak minta contoh lagi (mengetuk Lio). */
+  ask?: number;
   /** Dipanggil saat anak mulai menebalkan huruf kecil. */
   onLower?: () => void;
 };
@@ -43,7 +45,7 @@ const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
 const mix = (a: Pose, b: Pose, k: number): Pose => ({ s: lerp(a.s, b.s, k), ox: lerp(a.ox, b.ox, k), oy: lerp(a.oy, b.oy, k) });
 const ease = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 
-export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops, onStrokes, startLower = false, onLower }: Props) {
+export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops, onStrokes, startLower = false, onLower, ask = 0 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   /** Titik contoh gerakan tangan untuk goresan yang sedang dikerjakan. */
   const handRef = useRef<() => HandDemo>(() => ({ pts: [] }));
@@ -372,7 +374,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
   return (
     <>
       <canvas id="board" ref={canvasRef} style={{ width: size, height: size }} aria-label={`Papan menebalkan huruf ${letter.ch}`} />
-      <Hand demo={() => handRef.current()} restart={demoKey} delay={1100} now={hintNow} />
+      <Hand demo={() => handRef.current()} restart={demoKey} delay={1100} now={hintNow + ask} />
     </>
   );
 }

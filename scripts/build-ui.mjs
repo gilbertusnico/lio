@@ -5,7 +5,12 @@ import { createRequire } from "node:module";
 import sharp from "sharp";
 
 const set = createRequire(import.meta.url)("@iconify-json/noto/icons.json");
-const MAP = { hand: "backhand-index-pointing-up", album: "ledger", star: "star" };
+const MAP = {
+  hand: "backhand-index-pointing-up", album: "ledger", star: "star",
+  map: "world-map", home: "house", music: "musical-note", mute: "muted-speaker",
+  pencil: "pencil", find: "magnifying-glass-tilted-left", count: "input-numbers",
+  herb: "herb", lock: "locked", trophy: "trophy", phone: "mobile-phone",
+};
 fs.mkdirSync("public/ui", { recursive: true });
 for (const [name, icon] of Object.entries(MAP)) {
   const ic = set.icons[icon];

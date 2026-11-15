@@ -221,6 +221,34 @@ async function main() {
   await page.reload();
   await page.locator("#btnStart").click({ force: true });
   await page.locator("#grid").waitFor();
+
+  // Tombol back HP: mundur satu layar di dalam game (peta → cover, kartu pembuka → peta, main → "Berhenti main?")
+  await page.goBack();
+  await page.locator("#btnStart").waitFor();
+  await page.locator("#btnStart").click({ force: true });
+  await page.locator("#grid").waitFor();
+  await page.locator(".tile").first().click({ force: true });
+  await page.locator("#introGo").waitFor();
+  await page.goBack();
+  await page.locator("#intro").waitFor({ state: "detached" });
+  await page.locator("#grid").waitFor();
+  await page.locator(".tile").first().click({ force: true });
+  await page.locator("#introGo").click({ force: true });
+  await page.locator("#board").waitFor();
+  await page.goBack();
+  await page.locator("#leave").waitFor();
+  await page.goBack(); // back lagi = "Lanjut main"
+  await page.locator("#leave").waitFor({ state: "detached" });
+  if (!(await page.locator("#board").count())) throw new Error("tombol back saat dialog malah keluar dari permainan");
+  // Lio diketuk → tangan penunjuk mencontohkan lagi
+  await page.waitForTimeout(300);
+  await page.mouse.click(5, 5);
+  const lio = (await page.locator(".lio-tap").boundingBox())!;
+  await page.mouse.click(lio.x + lio.width / 2, lio.y + lio.height / 2);
+  await page.locator(".hand").waitFor({ timeout: 3000 });
+  await page.locator("#btnBack").click({ force: true });
+  await page.locator("#leaveYes").click({ force: true });
+  await page.locator("#grid").waitFor();
   if ((await page.locator(".tile").count()) !== 26) throw new Error("jumlah huruf bukan 26");
   if (await page.locator(".tile.locked").count()) throw new Error("ada huruf terkunci");
 
@@ -256,6 +284,26 @@ async function main() {
     return { scroll: g.scrollHeight - g.clientHeight, style: getComputedStyle(g).overflowY, mapScroll: m.scrollHeight - m.clientHeight, bottom: last.bottom, vh: innerHeight };
   });
   if (map.style !== "visible" || map.bottom > map.vh) throw new Error("Pilih Huruf: kotak huruf tidak muat / masih bisa digulir " + JSON.stringify(map));
+  // Reset progres: tekan lama "Lio" 3 detik → konfirmasi bergaya game → "Jangan" membatalkan, "Ya, hapus" menghapus
+  await page.locator("#btnHome").click({ force: true });
+  await page.locator("#btnStart").waitFor();
+  await page.waitForTimeout(900);
+  const logo = (await page.locator("#start .t2").boundingBox())!;
+  const hold = async () => {
+    await page.mouse.move(logo.x + logo.width / 2, logo.y + logo.height / 2);
+    await page.mouse.down();
+    await page.locator(".hold-ring").waitFor({ timeout: 1000 });
+    await page.locator("#reset").waitFor({ timeout: 5000 });
+    await page.mouse.up();
+  };
+  await hold();
+  await page.locator("#resetNo").click({ force: true });
+  await page.locator("#reset").waitFor({ state: "detached" });
+  if (!Object.keys((await page.evaluate(() => JSON.parse(localStorage.getItem("lio-progress-v1") || "{}"))).done || {}).length) throw new Error('"Jangan" malah menghapus progres');
+  await hold();
+  await page.locator("#resetYes").click({ force: true });
+  await page.locator("#reset").waitFor({ state: "detached" });
+  if (Object.keys((await page.evaluate(() => JSON.parse(localStorage.getItem("lio-progress-v1") || "{}"))).done || {}).length) throw new Error("reset tidak menghapus progres");
   await browser.close();
   if (errors.length) throw new Error("error JS:\n" + errors.join("\n"));
   console.log(`LULUS (${VW}x${VH}): ${letters.join(" ")}`);

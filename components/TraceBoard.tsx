@@ -6,7 +6,7 @@ import type { Letter } from "@/data/letters";
 import { advance, canStart, dist, isDot } from "@/lib/trace";
 import { audio, sfx } from "@/lib/audio";
 import { PADR, layout, type Pose } from "@/lib/traceLayout";
-import Hand, { type HandPoint } from "./Hand";
+import Hand, { type HandDemo, type HandPoint } from "./Hand";
 import type { PoseName } from "./Lio";
 
 /**
@@ -46,7 +46,7 @@ const ease = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) /
 export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops, onStrokes, startLower = false, onLower }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   /** Titik contoh gerakan tangan untuk goresan yang sedang dikerjakan. */
-  const handRef = useRef<() => HandPoint[]>(() => []);
+  const handRef = useRef<() => HandDemo>(() => ({ pts: [] }));
   const [demoKey, setDemoKey] = useState(0);
   const cb = useRef({ onDone, onSay, onPose, onOops, onStrokes, onLower });
   const sizeRef = useRef(size);
@@ -62,7 +62,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     const color = letter.color;
-    const st = { phase: (startLower ? "lower" : "upper") as Phase, stroke: 0, prog: 0, drawing: false, lastOops: 0, t0: 0 };
+    const st = { pointer: -1, phase: (startLower ? "lower" : "upper") as Phase, stroke: 0, prog: 0, drawing: false, lastOops: 0, t0: 0 };
     const sparks: Spark[] = [];
     const timers: ReturnType<typeof setTimeout>[] = [];
     const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms));
@@ -91,22 +91,22 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       const p = activePose();
       return [(bx - p.ox) / p.s, (by - p.oy) / p.s];
     }
-    // Tangan mencontohkan arah goresan: beberapa titik dari posisi sekarang ke depan.
+    // Tangan mencontohkan goresan yang sedang aktif SAMPAI SELESAI, mengikuti bentuknya titik demi titik.
+    // Penting untuk goresan yang berbalik arah (tangkai a, n, b): anak melihat jarinya naik lalu turun lagi.
     handRef.current = () => {
       const g = active();
-      if (!g) return [];
-      const pts = g.strokes[st.stroke];
-      if (!pts) return [];
+      const pts = g?.strokes[st.stroke];
+      if (!g || !pts) return { pts: [] };
       const r = canvas.getBoundingClientRect();
       const toScreen = (b: Pt): HandPoint => {
         const c = place(b, activePose());
         return { x: r.left + c[0], y: r.top + c[1] };
       };
-      const last = pts.length - 1;
-      if (isDot(pts)) return [toScreen(pts[0])];
-      const endIdx = Math.min(last, st.prog + 26);
-      if (endIdx - st.prog < 3) return [];
-      return Array.from({ length: 5 }, (_, i) => toScreen(pts[Math.round(st.prog + ((endIdx - st.prog) * i) / 4)]));
+      if (isDot(pts)) return { pts: [toScreen(pts[0])] };
+      const out: HandPoint[] = [];
+      for (let i = st.prog; i < pts.length; i += 2) out.push(toScreen(pts[i]));
+      out.push(toScreen(pts[pts.length - 1]));
+      return { pts: out, glide: true };
     };
 
     /* ---------- alur ---------- */
@@ -187,8 +187,10 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       if (!g) return;
       const pts = g.strokes[st.stroke];
       const p = toGlyph(e);
+      if (st.drawing && e.pointerId !== st.pointer) return; // jari kedua diabaikan
       if (canStart(pts, st.prog, p)) {
         st.drawing = !isDot(pts);
+        st.pointer = e.pointerId;
         try { canvas.setPointerCapture(e.pointerId); } catch {}
         step(p);
       } else {
@@ -198,7 +200,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       }
     };
     const move = (e: PointerEvent) => {
-      if (!st.drawing) return;
+      if (!st.drawing || e.pointerId !== st.pointer) return;
       e.preventDefault();
       const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
       for (const ev of evs.length ? evs : [e]) {
@@ -206,7 +208,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
         step(toGlyph(ev));
       }
     };
-    const stop = () => { st.drawing = false; };
+    const stop = (e: PointerEvent) => { if (e.pointerId === st.pointer) st.drawing = false; };
     canvas.addEventListener("pointerdown", down);
     canvas.addEventListener("pointermove", move);
     canvas.addEventListener("pointerup", stop);
@@ -365,7 +367,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
   return (
     <>
       <canvas id="board" ref={canvasRef} style={{ width: size, height: size }} aria-label={`Papan menebalkan huruf ${letter.ch}`} />
-      <Hand points={() => handRef.current()} restart={demoKey} delay={1000} />
+      <Hand demo={() => handRef.current()} restart={demoKey} delay={1100} />
     </>
   );
 }

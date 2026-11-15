@@ -160,12 +160,59 @@ button.step:disabled { cursor: default; }
 .album-hint { flex: none; min-height: 30px; padding: 4px 14px; font: 700 16px var(--font-ui); color: var(--ink); }
 
 /* ===== Tangan penunjuk (butir 8) ===== */
-.hand { position: fixed; left: 0; top: 0; z-index: 4; width: 48px; height: 54px; margin-left: -22px; margin-top: -3px;
-  pointer-events: none; animation: handIn .25s ease-out; filter: drop-shadow(0 4px 6px rgba(0,0,0,.22)); will-change: transform; }
-.hand svg { width: 100%; height: 100%; display: block; }
-.hand-in { width: 100%; height: 100%; transform-origin: 78% 88%; animation: handPress 1s ease-in-out both; }
-@keyframes handIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes handPress { 0%, 86% { transform: scale(1); } 92% { transform: scale(.86); } 100% { transform: scale(1); } }
-.hand-ring { position: fixed; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%;
-  border: 4px solid #ffb020; pointer-events: none; z-index: 3; opacity: 0; animation: handRing .75s ease-out both; }
-@keyframes handRing { 0% { opacity: 0; transform: scale(.3); } 30% { opacity: .85; } 100% { opacity: 0; transform: scale(1.2); } }
+/* Gambar tangan Noto (public/ui/hand.webp). Ujung telunjuknya = titik sentuh (±45% dari kiri, 6% dari atas). */
+.hand { position: fixed; left: 0; top: 0; z-index: 4; width: 68px; height: 68px; margin-left: -31px; margin-top: -5px;
+  pointer-events: none; opacity: 0; transform-origin: 45% 6%; will-change: transform, opacity; }
+.hand img { width: 100%; height: 100%; display: block; transform: rotate(-14deg); transform-origin: 45% 6%;
+  filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(0 5px 6px rgba(0,0,0,.28)); }
+.hand-ring { position: fixed; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%;
+  border: 5px solid #ffb020; background: rgba(255,208,84,.25); pointer-events: none; z-index: 3; opacity: 0;
+  animation: handRing .7s ease-out both; }
+@keyframes handRing { 0% { opacity: 0; transform: scale(.3); } 30% { opacity: .9; } 100% { opacity: 0; transform: scale(1.25); } }
+
+/* ===== Penyempurnaan butir 7 dan 8 (15 Nov) ===== */
+/* Pilih Huruf: 5 kolom supaya A–Z muat tanpa menggulir di HP kecil; bintang tidak terpotong tepi */
+#map .legend { margin-bottom: 8px; }
+#map .grid { grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 440px; padding: 12px 10px 16px; scrollbar-width: none; }
+#map .grid::-webkit-scrollbar, .album-grid::-webkit-scrollbar { display: none; }
+#map .tile { font-size: clamp(26px, 8vw, 34px); border-radius: 18px; }
+img.badge { position: absolute; top: -10px; right: -8px; width: 26px; height: 26px; filter: drop-shadow(0 2px 0 rgba(0,0,0,.15)); }
+.map-album { margin-bottom: 4px; }
+.map-album img { width: 26px; height: 26px; }
+@media (max-height: 600px) { #map h2 { font-size: 28px; margin: 2px 0 0; } #map .legend { display: none; } #map .grid { gap: 8px; } }
+@media (min-width: 600px) and (min-height: 800px) {
+  #map .grid { grid-template-columns: repeat(6, 1fr); gap: 16px; max-width: 660px; }
+  #map .tile { font-size: 52px; border-radius: 24px; }
+  img.badge { width: 36px; height: 36px; top: -12px; right: -10px; }
+  .map-album { font-size: 22px; padding: 12px 22px; }
+}
+
+/* Album: label huruf di tiap kotak, nama tidak menimpa gambar, semua muat tanpa menggulir di HP */
+.album-head h2 { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.album-head h2 img { width: 30px; height: 30px; }
+.album-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 440px; padding: 12px 6px 8px; scrollbar-width: none; }
+.sticker { padding: 5px; border-radius: 16px; }
+.sticker .ch { position: absolute; top: -5px; left: -5px; z-index: 1; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 999px;
+  background: #c3cbd8; color: #fff; font: 700 14px/22px var(--font-letter); text-align: center; box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+.sticker.has > img { height: 78%; margin-bottom: 16%; }
+.sticker.has { box-shadow: 0 4px 0 #ffd54d; }
+.sticker .nm { bottom: 3px; font-size: clamp(8px, 2.3vw, 11px); }
+.sticker.locked.react { animation: shake .4s; }
+.album-hint { font-size: 18px; min-height: 34px; }
+@media (min-height: 760px) and (max-width: 599px) { .album-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; } .sticker .nm { font-size: 11px; } }
+@media (min-width: 600px) and (min-height: 800px) {
+  .album-grid { grid-template-columns: repeat(6, 1fr); gap: 14px; max-width: 660px; }
+  .sticker .nm { font-size: 14px; } .sticker .ch { font-size: 18px; min-width: 28px; height: 28px; line-height: 28px; }
+}
+
+/* Layar menang: stiker baru di samping Lio, lalu terbang ke ikon album */
+.win-row { position: relative; }
+.new-sticker { position: absolute; right: 2%; top: 0; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+.new-sticker img { width: clamp(84px, 24vw, 112px); height: clamp(84px, 24vw, 112px); object-fit: contain; background: #fff; border-radius: 22px;
+  padding: 8px; box-shadow: 0 0 0 4px #ffd54d, 0 8px 14px rgba(120,80,0,.22); }
+.new-sticker span { margin-top: -10px; background: #ff7a1f; color: #fff; font: 800 14px var(--font-ui); padding: 3px 10px; border-radius: 999px;
+  box-shadow: 0 3px 0 #c4560f; white-space: nowrap; }
+.fly-sticker { background: #fff; border-radius: 22px; padding: 8px; box-shadow: 0 0 0 4px #ffd54d; filter: none; }
+.album-chip img { width: 26px; height: 26px; }
+.album-chip.bump { animation: chipBump .55s cubic-bezier(.2,1.6,.4,1); }
+@keyframes chipBump { 0% { transform: scale(1); } 35% { transform: scale(1.35) rotate(-8deg); } 100% { transform: scale(1); } }

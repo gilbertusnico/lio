@@ -29,7 +29,7 @@ export const LETTERS: Letter[] = [
   { ch: "I", word: "Ikan", img: A("ikan"), color: "#3d8bff", similar: "TJFHEjtrfu", motion: "float" },
   { ch: "J", word: "Jerapah", img: A("jerapah"), color: "#f2a900", similar: "LUTISilygt", motion: "walk" },
   { ch: "K", word: "Kupu-kupu", img: A("kupu-kupu"), color: "#7a6bff", similar: "HXRYNhxbft", motion: "float" },
-  { ch: "L", word: "Lio", img: "/lio/lio-depan-melambai.webp", color: "#ff8a1f", similar: "TEFJUtfjbh", motion: "float" },
+  { ch: "L", word: "Lio", img: "/lio/lio-depan-melambai.webp", color: "#ff8a1f", similar: "TEFJUtfjbh", motion: "walk" },
   { ch: "M", word: "Monyet", img: A("monyet"), color: "#b9783f", similar: "NWHAVnwurh", motion: "walk" },
   { ch: "N", word: "Nuri", img: A("nuri"), color: "#22b573", similar: "MHZAKmhurv", motion: "float" },
   { ch: "O", word: "Orangutan", img: A("orangutan"), color: "#ff6b4a", similar: "CQGDUcaedu", motion: "walk" },

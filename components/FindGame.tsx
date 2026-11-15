@@ -5,7 +5,7 @@ import { NUM, type Letter } from "@/data/letters";
 import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
 import Pop from "./Pop";
-import Hand, { centerOf, type HandPoint } from "./Hand";
+import Hand, { centerOf, type HandDemo } from "./Hand";
 import type { PoseName } from "./Lio";
 
 /**
@@ -35,9 +35,13 @@ export default function FindGame({ letter, onDone, onSay, onPose }: Props) {
   const [wrong, setWrong] = useState<{ i: number; n: number } | null>(null);
   const btns = useRef<(HTMLButtonElement | null)[]>([]);
   const total = 4;
-  // Contoh gerakan tangan: menunjuk dua gelembung yang benar.
-  const targets = cells.map((c, i) => (c === letter.ch || c === lo ? i : -1)).filter((i) => i >= 0).slice(0, 2);
-  const demoPoints = () => targets.map((i) => centerOf(btns.current[i])).filter((p): p is HandPoint => !!p);
+  // Contoh gerakan tangan: mengetuk SATU gelembung benar yang belum ketemu. Cukup untuk menunjukkan
+  // caranya; sisanya tetap harus dicari sendiri.
+  const demo = (): HandDemo => {
+    const i = cells.findIndex((c, k) => (c === letter.ch || c === lo) && !found.includes(k));
+    const p = i < 0 || found.length >= total ? null : centerOf(btns.current[i]);
+    return { pts: p ? [p] : [] };
+  };
 
   function tap(i: number) {
     audio();
@@ -84,7 +88,7 @@ export default function FindGame({ letter, onDone, onSay, onPose }: Props) {
         );
       })}
     </div>
-    <Hand points={demoPoints} />
+    <Hand demo={demo} />
     </>
   );
 }

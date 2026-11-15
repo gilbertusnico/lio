@@ -33,13 +33,16 @@ export default function Game() {
   const [album, setAlbum] = useState(false);
   const [newSticker, setNewSticker] = useState(false);
   const [fly, setFly] = useState<{ from: DOMRect; to: DOMRect } | null>(null);
+  const [landed, setLanded] = useState(false); // stiker baru sudah sampai di ikon album
   const [pay, setPay] = useState<null | "locked" | "win">(null);
   const [bubble, setBubble] = useState("…");
   const [pose, setPoseState] = useState<{ name: PoseName; n: number }>({ name: "menunjuk", n: 0 });
   const [progress, setProgress] = useState<Progress>(emptyProgress);
   const [musicOn, setMusicOn] = useState(true);
   const fx = useRef<FxHandle>(null);
-  const winImg = useRef<HTMLImageElement>(null);
+  const stickerImg = useRef<HTMLImageElement>(null);
+  const leavingRef = useRef(false);
+  const pending = useRef<null | (() => void)>(null);
   const albumBtn = useRef<HTMLButtonElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const L = LETTERS[cur];
@@ -54,20 +57,33 @@ export default function Game() {
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Stiker baru: hewan terbang dari Lio ke ikon album.
+  // Stiker baru: muncul di samping Lio, lalu terbang ke ikon album di pojok kanan atas.
   useEffect(() => {
-    if (!win || !newSticker) { setFly(null); return; }
+    if (!win || !newSticker) return;
     const t = setTimeout(() => {
-      const a = winImg.current?.getBoundingClientRect();
+      const a = stickerImg.current?.getBoundingClientRect();
       const b = albumBtn.current?.getBoundingClientRect();
       if (a && b) setFly({ from: a, to: b });
-    }, 520);
+    }, 1700);
     return () => clearTimeout(t);
   }, [win, newSticker]);
+  useEffect(() => { leavingRef.current = leaving; });
 
   const say = useCallback((t: string) => setBubble(t), []);
   const setPose = useCallback((name: PoseName) => setPoseState((p) => ({ name, n: p.n + 1 })), []);
-  const clearTimer = () => { if (timer.current) clearTimeout(timer.current); timer.current = null; };
+  const clearTimer = () => { if (timer.current) clearTimeout(timer.current); timer.current = null; pending.current = null; };
+  /**
+   * Menjalankan langkah berikutnya setelah jeda. Kalau saat itu dialog "Berhenti main?" sedang terbuka,
+   * langkahnya ditahan sampai anak memilih "Lanjut main" (dulu game jalan terus di balik dialog).
+   */
+  const after = (fn: () => void, ms: number) => {
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      if (leavingRef.current) pending.current = fn;
+      else fn();
+    }, ms);
+  };
+  const resetSticker = () => { setNewSticker(false); setFly(null); setLanded(false); };
   useEffect(() => clearTimer, []);
 
   function toggleMusic() {
@@ -84,8 +100,7 @@ export default function Game() {
     setCur(i);
     setMini3(pickMini3(progress.last3[LETTERS[i].ch]));
     setWin(false);
-    setNewSticker(false);
-    setFly(null);
+    resetSticker();
     setIntro(true);
   }
 
@@ -102,24 +117,25 @@ export default function Game() {
     sfx.ding();
     setPose("tepuk-tangan");
     say(praise() + " Ayo lanjut!");
-    timer.current = setTimeout(() => startGame(game + 1), 1600);
+    after(() => startGame(game + 1), 1600);
   }
 
   function levelDone() {
     const next: Progress = { done: { ...progress.done, [L.ch]: true }, last3: { ...progress.last3, [L.ch]: mini3 } };
     setNewSticker(!progress.done[L.ch]);
+    setLanded(false);
+    setFly(null);
     setProgress(next);
     saveProgress(next);
     sfx.win();
     fx.current?.confetti();
-    timer.current = setTimeout(() => setWin(true), 450);
+    after(() => setWin(true), 450);
   }
 
   function goMap() {
     clearTimer();
     setWin(false);
-    setNewSticker(false);
-    setFly(null);
+    resetSticker();
     setIntro(false);
     setLeaving(false);
     setScreen("map");
@@ -188,7 +204,7 @@ export default function Game() {
               <img className="leave-lio" src={lioSrc("sedih")} alt="" draggable={false} />
               <h3 className="leave-title">Berhenti main?</h3>
               <div className="leave-btns">
-                <button className="btn green" id="leaveNo" onClick={() => setLeaving(false)}>▶ Lanjut main</button>
+                <button className="btn green" id="leaveNo" onClick={() => { setLeaving(false); const fn = pending.current; pending.current = null; fn?.(); }}>▶ Lanjut main</button>
                 <button className="btn ghost" id="leaveYes" onClick={goMap}>🗺️ Keluar</button>
               </div>
             </div>
@@ -204,25 +220,42 @@ export default function Game() {
             {fly && (
               <motion.img
                 className="fly-sticker" src={L.img} alt="" draggable={false}
-                initial={{ left: fly.from.left + fly.from.width / 2 - 44, top: fly.from.top + fly.from.height / 2 - 44, width: 88, height: 88, opacity: 1, rotate: 0 }}
-                animate={{ left: fly.to.left + fly.to.width / 2 - 20, top: fly.to.top + fly.to.height / 2 - 20, width: 40, height: 40, opacity: 0.9, rotate: 18 }}
-                transition={{ duration: 0.85, ease: [0.4, 0, 0.2, 1] }}
-                onAnimationComplete={() => setFly(null)}
+                style={{ left: fly.from.left, top: fly.from.top, width: fly.from.width, height: fly.from.height }}
+                initial={{ x: 0, y: 0, scale: 1, rotate: -8, opacity: 1 }}
+                animate={{
+                  x: fly.to.left + fly.to.width / 2 - (fly.from.left + fly.from.width / 2),
+                  y: [0, -50, fly.to.top + fly.to.height / 2 - (fly.from.top + fly.from.height / 2)],
+                  scale: [1, 1.15, 0.3], rotate: [-8, 8, 24], opacity: [1, 1, 0.7],
+                }}
+                transition={{ duration: 0.9, ease: "easeInOut", times: [0, 0.3, 1] }}
+                onAnimationComplete={() => { setFly(null); setLanded(true); sfx.ding(); }}
               />
             )}
             <button
-              ref={albumBtn} className="album-chip win-album" id="winAlbum"
+              ref={albumBtn} className={`album-chip win-album${landed ? " bump" : ""}`} id="winAlbum"
               onClick={() => { audio(); setAlbum(true); }} aria-label="Buka album stiker"
             >
-              📒 <b>{stickerCount}</b>
+              <img src="/ui/album.webp" alt="" draggable={false} /> <b>{stickerCount - (newSticker && !landed ? 1 : 0)}</b>
             </button>
-            {newSticker && <div className="stiker-baru">Stiker baru!</div>}
             <div className="panel">
-              <div className="win-row"><img ref={winImg} className="lio lio-win" src={lioSrc("lompat")} alt="Lio" draggable={false} /></div>
+              <div className="win-row">
+                <img className="lio lio-win" src={lioSrc("lompat")} alt="Lio" draggable={false} />
+                {newSticker && (
+                  <motion.div
+                    className="new-sticker"
+                    initial={{ scale: 0, rotate: -30, opacity: 0 }}
+                    animate={{ scale: 1, rotate: -8, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 14, delay: 0.55 }}
+                  >
+                    <img ref={stickerImg} src={L.img} alt={L.word} draggable={false} />
+                    <span>Stiker baru!</span>
+                  </motion.div>
+                )}
+              </div>
               <h3 id="winText">Huruf {L.ch} selesai!</h3>
               <div className="stars"><span>⭐</span><span>⭐</span><span>⭐</span></div>
               <div className="row" style={{ justifyContent: "center", marginTop: 16 }}>
-                <button className="btn ghost" id="winRetry" onClick={() => { setWin(false); setMini3(pickMini3(mini3)); startGame(0); }}>↺ Lagi</button>
+                <button className="btn ghost" id="winRetry" onClick={() => { setWin(false); resetSticker(); setMini3(pickMini3(mini3)); startGame(0); }}>↺ Lagi</button>
                 <button
                   className="btn green" id="winNext"
                   onClick={() => {
@@ -241,7 +274,7 @@ export default function Game() {
 
       <AnimatePresence>{pay && <Paywall key="pay" fromWin={pay === "win"} onClose={() => setPay(null)} />}</AnimatePresence>
 
-      {album && <Album progress={progress} onClose={() => setAlbum(false)} />}
+      <AnimatePresence>{album && <Album key="album" progress={progress} onClose={() => setAlbum(false)} />}</AnimatePresence>
 
       {screen === "map" && !intro && (
         <button className="btn ghost icon-btn home-float" id="btnHome" style={{ display: "block" }} aria-label="Kembali ke beranda" onClick={() => { audio(); setScreen("start"); }}>

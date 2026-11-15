@@ -48,7 +48,12 @@ async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<v
   await shot(`${ch}-1-intro`);
   await page.locator("#introGo").click({ force: true });
   await page.locator("#board").waitFor();
-  await page.waitForTimeout(500);
+  // Tangan penunjuk mencontohkan goresan di awal, dan hilang begitu layar disentuh
+  await page.locator(".hand").waitFor({ timeout: 4000 });
+  await page.mouse.move(5, 5);
+  await page.mouse.down();
+  await page.mouse.up();
+  if (await page.locator(".hand").count()) throw new Error(`${ch}: tangan penunjuk tidak hilang saat layar disentuh`);
 
   // Keluar garis: mulai di titik 1 lalu lari jauh → papan goyang
   const r = (await page.locator("#board").boundingBox())!;
@@ -87,6 +92,15 @@ async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<v
   await traceGlyph(page, lower, layout(upper, lower).lower);
   await page.waitForTimeout(1500);
   await shot(`${ch}-4-berdua`);
+  if (ch === letters[0]) {
+    // 🗺️ ditekan tepat saat jeda pindah mini-game: dialog tampil, game TIDAK jalan diam-diam di baliknya,
+    // dan "Lanjut main" meneruskan ke mini-game berikutnya.
+    await page.locator("#btnBack").click({ force: true });
+    await page.locator("#leave").waitFor();
+    await page.waitForTimeout(3500);
+    if (await page.locator(".qgrid").count()) throw new Error(`${ch}: game jalan terus di balik dialog "Berhenti main?"`);
+    await page.locator("#leaveNo").click({ force: true });
+  }
 
   // Mini-game 2: cari huruf
   await page.locator(".qgrid").waitFor({ timeout: 6000 });
@@ -133,8 +147,23 @@ async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<v
     }
   }
   await page.locator("#win").waitFor({ timeout: 6000 });
-  await page.waitForTimeout(600);
+  const firstTime = !(await page.evaluate((c) => (window as unknown as { __seen?: Record<string, boolean> }).__seen?.[c], ch));
+  await page.evaluate((c) => { const w = window as unknown as { __seen?: Record<string, boolean> }; (w.__seen ||= {})[c] = true; }, ch);
+  await page.waitForTimeout(1200);
   await shot(`${ch}-7-menang`);
+  if (firstTime) {
+    if (!(await page.locator(".new-sticker").count())) throw new Error(`${ch}: "Stiker baru!" tidak muncul`);
+    await page.locator("#winAlbum.bump").waitFor({ timeout: 5000 }); // stiker sudah terbang masuk album
+    await shot(`${ch}-8-stiker-masuk`);
+    await page.locator("#winAlbum").click({ force: true });
+    await page.locator("#album").waitFor();
+    if ((await page.locator("#album .sticker").count()) !== 26) throw new Error(`${ch}: album bukan 26 kotak`);
+    if (!(await page.locator(`#album .sticker.has[aria-label^="Stiker ${L.word}"]`).count())) throw new Error(`${ch}: stiker tidak masuk album`);
+    await page.waitForTimeout(700);
+    await shot(`${ch}-9-album`);
+    await page.locator("#album .icon-btn").click({ force: true });
+    await page.locator("#album").waitFor({ state: "detached" });
+  } else if (await page.locator(".new-sticker").count()) throw new Error(`${ch}: "Stiker baru!" muncul lagi saat main ulang`);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("lio-progress-v1") || "{}"));
   if (!saved.done?.[ch]) throw new Error(`${ch}: progres tidak tersimpan`);
   if (saved.last3?.[ch] !== kind) throw new Error(`${ch}: jenis mini-game 3 tidak tercatat`);

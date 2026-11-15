@@ -20,10 +20,10 @@ export default function LetterMap({ progress, onPick, onAlbum }: { progress: Pro
   return (
     <section id="map" className="screen on">
       <Pop><h2><span className="sparkle">Pilih Huruf</span></h2></Pop>
-      <div className="legend">{stars > 0 ? `⭐ ${stars} dari 26 huruf selesai` : "Pilih huruf mana saja ya!"}</div>
+      <div className="legend">Pilih huruf mana saja ya!</div>
       <Pop delay={0.06}>
         <button className="btn ghost map-album" id="btnAlbum" onClick={onAlbum} aria-label="Buka album stiker">
-          📒 Album Stiker <b>{stars}/26</b>
+          <img src="/ui/album.webp" alt="" draggable={false} /> Album Stiker <b>{stars}/26</b>
         </button>
       </Pop>
       <div className="grid" id="grid">
@@ -39,7 +39,7 @@ export default function LetterMap({ progress, onPick, onAlbum }: { progress: Pro
               aria-label={`Huruf ${l.ch}${progress.done[l.ch] ? ", sudah selesai" : ""}`}
             >
               {l.ch}
-              {locked ? <span className="lock">🔒</span> : progress.done[l.ch] && <span className="badge">⭐</span>}
+              {locked ? <span className="lock">🔒</span> : progress.done[l.ch] && <img className="badge" src="/ui/star.webp" alt="" draggable={false} />}
             </button>
             </Pop>
           );

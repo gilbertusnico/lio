@@ -5,7 +5,7 @@ import { NUM, type Letter } from "@/data/letters";
 import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
 import Pop from "./Pop";
-import Hand, { centerOf, type HandPoint } from "./Hand";
+import Hand, { centerOf, type HandDemo, type HandPoint } from "./Hand";
 import type { PoseName } from "./Lio";
 
 /** Mini-game 3a: hitung hewan (3–6). Ketuk satu-satu untuk menghitung, lalu pilih angkanya. */
@@ -22,13 +22,15 @@ export default function CountGame({ letter, onDone, onSay, onPose }: Props) {
   const [done, setDone] = useState(false);
   const items = useRef<(HTMLButtonElement | null)[]>([]);
   const optsEls = useRef<(HTMLButtonElement | null)[]>([]);
-  // Contoh gerakan tangan: menghitung tiga hewan pertama, lalu menunjuk jawabannya.
-  const demoPoints = () => {
-    const pts = Array.from({ length: Math.min(3, n) }, (_, i) => centerOf(items.current[i])).filter((p): p is HandPoint => !!p);
-    const ans = centerOf(optsEls.current[opts.indexOf(n)]);
-    if (ans) pts.push(ans);
-    return pts;
+  // Contoh gerakan tangan: mengetuk hewan yang belum dihitung (paling banyak tiga). Kalau semua sudah
+  // dihitung, tangan mengetuk ketiga angka bergantian, tanpa menunjukkan mana jawabannya.
+  const demo = (): HandDemo => {
+    if (done) return { pts: [] };
+    const left = Array.from({ length: n }, (_, i) => i).filter((i) => !order.includes(i)).slice(0, 3);
+    const els = left.length ? left.map((i) => items.current[i]) : optsEls.current;
+    return { pts: els.map((el) => centerOf(el)).filter((p): p is HandPoint => !!p) };
   };
+
 
   function count(i: number) {
     audio();
@@ -88,7 +90,7 @@ export default function CountGame({ letter, onDone, onSay, onPose }: Props) {
           );
         })}
       </div>
-      <Hand points={demoPoints} />
+      <Hand demo={demo} />
     </>
   );
 }

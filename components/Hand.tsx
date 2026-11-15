@@ -4,6 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 export type HandPoint = { x: number; y: number };
+/**
+ * Contoh gerakan: `glide` = jari menempel dan meluncur mengikuti semua titik (menebalkan garis);
+ * tanpa `glide` = jari melompat dari titik ke titik dan mengetuk tiap titik.
+ */
+export type HandDemo = { pts: HandPoint[]; glide?: boolean };
 
 /** Titik tengah sebuah elemen dalam koordinat layar. */
 export function centerOf(el: Element | null | undefined): HandPoint | null {
@@ -12,140 +17,156 @@ export function centerOf(el: Element | null | undefined): HandPoint | null {
   return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 }
 
-type Demo = { pts: HandPoint[]; times: number[]; dur: number };
+type Key = { t: number; x: number; y: number };
+type Plan = { keys: Key[]; taps: Key[]; dur: number; glide: boolean };
 type Props = {
   /** Titik yang dicontohkan (koordinat layar), dihitung saat contoh dimulai. */
-  points: () => HandPoint[];
+  demo: () => HandDemo;
   /** Naikkan nilainya untuk memulai contoh lagi (mis. masuk huruf kecil). */
   restart?: number;
-  /** Jeda sebelum contoh pertama. */
+  /** Jeda sebelum contoh pertama (ms). */
   delay?: number;
 };
 
 const IDLE_MS = 5000;
-const SPEED = 300; // px per detik
+const GLIDE_SPEED = 190; // px per detik: cukup pelan untuk diikuti mata anak
+const HOP_SPEED = 420;
+const DWELL = 0.55; // detik berhenti di tiap titik ketuk
+const smooth = (s: number) => (s < 0.5 ? 2 * s * s : 1 - Math.pow(-2 * s + 2, 2) / 2);
+
+function plan({ pts: raw, glide = false }: HandDemo): Plan | null {
+  const ok = raw.filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
+  const pts = ok.filter((p, i) => i === 0 || Math.hypot(p.x - ok[i - 1].x, p.y - ok[i - 1].y) > (glide ? 1 : 6));
+  if (!pts.length) return null;
+  const keys: Key[] = [];
+  const taps: Key[] = [];
+  let t = 0.25; // tangan muncul dulu
+  if (glide && pts.length > 1) {
+    taps.push({ t, ...pts[0] });
+    t += 0.4; // menempel di titik mulai
+    keys.push({ t, ...pts[0] });
+    for (let i = 1; i < pts.length; i++) {
+      t += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y) / GLIDE_SPEED;
+      keys.push({ t, ...pts[i] });
+    }
+    t += 0.45;
+  } else {
+    pts.forEach((p, i) => {
+      if (i) t += Math.min(0.8, Math.max(0.3, Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y) / HOP_SPEED));
+      keys.push({ t, ...p });
+      taps.push({ t: t + 0.08, ...p });
+      t += DWELL;
+      keys.push({ t, ...p });
+    });
+    t += 0.2;
+  }
+  return { keys, taps, dur: t, glide: glide && pts.length > 1 };
+}
 
 /**
  * Tangan penunjuk: mencontohkan gerakan di awal mini-game, lalu muncul lagi kalau anak diam 5 detik.
- * Digambar di atas semua layar lewat portal (tidak ikut transform pembungkus animasi).
+ * Hilang begitu layar disentuh, dan tidak muncul selama jari masih menempel.
+ * Digambar di atas layar lewat portal (tidak ikut transform pembungkus animasi).
  */
-export default function Hand({ points, restart = 0, delay = 800 }: Props) {
-  const [mounted, setMounted] = useState(false);
-  const [demo, setDemo] = useState<Demo | null>(null);
-  const el = useRef<HTMLDivElement>(null);
+export default function Hand({ demo, restart = 0, delay = 900 }: Props) {
+  const [run, setRun] = useState<Plan | null>(null);
+  const node = useRef<HTMLDivElement>(null);
+  const getDemo = useRef(demo);
   const busy = useRef(false);
-  const getPoints = useRef(points);
-  getPoints.current = points;
+  const down = useRef(false);
   const idle = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const end = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const start = useRef<() => void>(() => {});
+  useEffect(() => { getDemo.current = demo; });
 
-  useEffect(() => setMounted(true), []);
-
+  const stop = useCallback(() => {
+    busy.current = false;
+    setRun(null);
+  }, []);
+  const start = useCallback(() => {
+    if (busy.current || down.current || document.hidden) return;
+    const p = plan(getDemo.current());
+    if (!p) return;
+    busy.current = true;
+    setRun(p);
+  }, []);
   const arm = useCallback(() => {
     if (idle.current) clearTimeout(idle.current);
-    idle.current = setTimeout(() => start.current(), IDLE_MS);
-  }, []);
-
-  start.current = () => {
-    if (busy.current) return;
-    const gov = getPoints.current().filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
-    // Buang titik yang (hampir) sama berurutan supaya gerakan tidak tersendat.
-    const pts = gov.filter((p, i) => i === 0 || Math.hypot(p.x - gov[i - 1].x, p.y - gov[i - 1].y) > 6);
-    if (pts.length < 2) return;
-    const segs = pts.slice(1).map((p, i) => Math.hypot(p.x - pts[i].x, p.y - pts[i].y));
-    const total = segs.reduce((a, b) => a + b, 0);
-    if (total < 12) return;
-    let acc = 0;
-    const times = [0, ...segs.map((s) => (acc += s) / total)];
-    const dur = Math.max(1.1, Math.min(3, total / SPEED));
-    busy.current = true;
-    setDemo({ pts, times, dur });
-    if (end.current) clearTimeout(end.current);
-    end.current = setTimeout(() => {
-      busy.current = false;
-      setDemo(null);
-      arm();
-    }, dur * 1000 + 300);
-  };
+    idle.current = setTimeout(start, IDLE_MS);
+  }, [start]);
 
   // Contoh pertama (dan tiap `restart` berubah).
   useEffect(() => {
-    const t = setTimeout(() => start.current(), delay);
+    const t = setTimeout(start, delay);
     return () => clearTimeout(t);
-  }, [restart, delay]);
+  }, [restart, delay, start]);
 
-  // Diam 5 detik tanpa sentuhan → contoh lagi.
+  // Sentuhan menghentikan contoh; diam 5 detik setelah jari diangkat → contoh lagi.
   useEffect(() => {
-    const act = () => { if (!busy.current) arm(); };
-    arm();
-    window.addEventListener("pointerdown", act, true);
-    window.addEventListener("pointermove", act, true);
-    window.addEventListener("keydown", act, true);
-    return () => {
-      window.removeEventListener("pointerdown", act, true);
-      window.removeEventListener("pointermove", act, true);
-      window.removeEventListener("keydown", act, true);
+    const press = () => {
+      down.current = true;
       if (idle.current) clearTimeout(idle.current);
-      if (end.current) clearTimeout(end.current);
+      stop();
     };
-  }, [arm]);
+    const release = () => {
+      down.current = false;
+      arm();
+    };
+    arm();
+    window.addEventListener("pointerdown", press, true);
+    window.addEventListener("pointerup", release, true);
+    window.addEventListener("pointercancel", release, true);
+    return () => {
+      window.removeEventListener("pointerdown", press, true);
+      window.removeEventListener("pointerup", release, true);
+      window.removeEventListener("pointercancel", release, true);
+      if (idle.current) clearTimeout(idle.current);
+    };
+  }, [arm, stop]);
 
-  // Gerakan tangan digerakkan sendiri (rAF) supaya tetap jalan walau perangkat minta gerak dikurangi.
+  // Gerakan digerakkan sendiri (rAF) supaya tetap jalan walau perangkat minta gerak dikurangi:
+  // tangan ini petunjuk utama untuk anak yang belum bisa membaca.
   useEffect(() => {
-    const node = el.current;
-    if (!demo || !node) return;
-    const { pts, times, dur } = demo;
+    const el = node.current;
+    if (!run || !el) return;
+    const { keys, taps, dur, glide } = run;
     const t0 = performance.now();
     let raf = 0;
     const tick = (now: number) => {
-      const k = Math.min(1, (now - t0) / (dur * 1000));
+      const t = (now - t0) / 1000;
+      if (t >= dur) {
+        stop();
+        arm();
+        return;
+      }
       let i = 0;
-      while (i < times.length - 2 && k > times[i + 1]) i++;
-      const span = Math.max(1e-6, times[i + 1] - times[i]);
-      const s = Math.min(1, Math.max(0, (k - times[i]) / span));
-      const e = s < 0.5 ? 2 * s * s : 1 - Math.pow(-2 * s + 2, 2) / 2;
-      const x = pts[i].x + (pts[i + 1].x - pts[i].x) * e;
-      const y = pts[i].y + (pts[i + 1].y - pts[i].y) * e;
-      node.style.transform = `translate(${x}px, ${y}px)`;
-      if (k < 1) raf = requestAnimationFrame(tick);
+      while (i < keys.length - 2 && t > keys[i + 1].t) i++;
+      const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)];
+      const s = Math.min(1, Math.max(0, (t - a.t) / Math.max(1e-6, b.t - a.t)));
+      const e = glide ? s : smooth(s);
+      const x = a.x + (b.x - a.x) * e, y = a.y + (b.y - a.y) * e;
+      // Jari menekan: saat meluncur menempel terus, saat mengetuk menekan sebentar di tiap titik.
+      let pressed = glide && t > taps[0].t && t < dur - 0.3 ? 1 : 0;
+      if (!glide) for (const k of taps) pressed = Math.max(pressed, 1 - Math.min(1, Math.abs(t - k.t - 0.12) / 0.16));
+      const fade = Math.min(1, t / 0.2, (dur - t) / 0.2);
+      el.style.opacity = String(Math.max(0, fade));
+      el.style.transform = `translate(${x}px, ${y}px) scale(${1 - 0.14 * pressed})`;
+      raf = requestAnimationFrame(tick);
     };
-    node.style.transform = `translate(${pts[0].x}px, ${pts[0].y}px)`;
+    el.style.opacity = "0";
+    el.style.transform = `translate(${keys[0].x}px, ${keys[0].y}px)`;
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [demo]);
+  }, [run, stop, arm]);
 
-  if (!mounted || !demo) return null;
-
+  if (!run) return null;
   return createPortal(
     <>
-      {demo.pts.map((p, i) => (
-        <span key={`r${i}`} className="hand-ring" style={{ left: p.x, top: p.y, animationDelay: `${demo.times[i] * demo.dur}s` }} />
+      {run.taps.map((p, i) => (
+        <span key={i} className="hand-ring" style={{ left: p.x, top: p.y, animationDelay: `${p.t}s` }} />
       ))}
-      <div ref={el} className="hand" aria-hidden>
-        <div className="hand-in" style={{ animationDuration: `${demo.dur}s` }}>
-          <HandArt />
-        </div>
+      <div ref={node} className="hand" aria-hidden>
+        <img src="/ui/hand.webp" alt="" draggable={false} />
       </div>
     </>,
-    document.body
-  );
-}
-
-/** Tangan putih bergaris tepi, telunjuk di kiri atas (ujung jari = titik sentuh). */
-function HandArt() {
-  return (
-    <svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M22 3 h10 a5 5 0 0 1 5 5 v20 h3 a6 6 0 0 1 6 6 v3 h2 a6 6 0 0 1 6 6 v2 a6 6 0 0 1 6 6 v6 a14 14 0 0 1 -14 14 h-9 a14 14 0 0 1 -11 -5 l-9 -12 a6 6 0 0 1 8 -8 l3 3 V8 a5 5 0 0 1 5 -5 z"
-        fill="#ffffff"
-        stroke="#2f4f3a"
-        strokeWidth="3.4"
-        strokeLinejoin="round"
-      />
-      <path d="M32 8 v18" stroke="#dfe6ee" strokeWidth="2" strokeLinecap="round" fill="none" />
-      <path d="M45 28 v6" stroke="#dfe6ee" strokeWidth="2" strokeLinecap="round" fill="none" />
-      <path d="M54 34 v6" stroke="#dfe6ee" strokeWidth="2" strokeLinecap="round" fill="none" />
-    </svg>
+    document.body,
   );
 }

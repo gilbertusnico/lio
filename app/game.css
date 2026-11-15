@@ -318,20 +318,11 @@ html, body { overscroll-behavior: none; position: fixed; inset: 0; width: 100%; 
 .album-grid, #map .grid { overscroll-behavior: contain; }
 @media (prefers-reduced-motion: reduce) { #map .tile.next { animation: none; } }
 
-/* Cover: tanah berumput menyambung sampai tepi bawah layar. Dulu tanahnya berupa elips yang
-   "mengambang", sehingga di bawahnya terlihat jalur pucat dan daun sudut tampak bertumpuk. */
-.cover-stage .ground-fill { position: absolute; left: 50%; top: calc(100% - 17px); width: 100vw; height: 100vh; transform: translateX(-50%);
-  z-index: 0; pointer-events: none;
-  background: linear-gradient(180deg, #c6e7a3 0, #c6e7a3 34px, #b4de8f 55%, #a3d57d 100%); }
-/* Celah pucat di antara bukit dan tanah (terlihat di tablet) diisi hijau muda */
-.scene { background-color: #d2ecbb; }
-.cover-stage .ground { width: 100vw; max-width: none; }
-/* Rumput kecil di tanah bawah, supaya tombol terasa "berdiri" di rumput */
-.cover-stage .ground-fill::before, .cover-stage .ground-fill::after { content: ""; position: absolute; top: 34px; width: 34px; height: 18px; opacity: .8;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 18'%3E%3Cg stroke='%2382c563' stroke-width='3' stroke-linecap='round' fill='none'%3E%3Cpath d='M8 17 4 6M14 17l2-13M20 17l7-10'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat; }
-.cover-stage .ground-fill::before { left: 22%; }
-.cover-stage .ground-fill::after { right: 18%; top: 20px; transform: scaleX(-1); }
-@media (min-width: 600px) and (min-height: 800px) {
-  .cover-stage .ground { height: 170px; }
-  .cover-stage .ground-fill { top: calc(100% - 69px); }
-}
+/* A single, full-width meadow keeps Lio's feet and the start button on the same ground. */
+#start > .cover-floor { position: absolute; left: -8vw; right: -8vw; bottom: 0; height: clamp(190px, 31vh, 320px);
+  z-index: 0; pointer-events: none; border-radius: 50% 50% 0 0 / 7% 7% 0 0;
+  background:
+    radial-gradient(ellipse at 50% 0, rgba(230, 248, 199, .72), transparent 68%),
+    linear-gradient(180deg, #c6e7a3 0%, #b4de8f 54%, #a3d57d 100%); }
+#start > .cover-floor::before { content: ""; position: absolute; left: -2%; right: -2%; top: -18px; height: 36px;
+  border-radius: 50%; background: #c6e7a3; filter: blur(7px); opacity: .72; }

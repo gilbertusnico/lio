@@ -28,6 +28,7 @@ export default function Cover({ onStart, onAskReset }: { onStart: () => void; on
   return (
     <section id="start" className="screen on">
       <div className="scene" />
+      <div className="cover-floor" />
       {["c1", "c2", "c3"].map((c) => <div key={c} className={`sky-cloud ${c} pokeable`} onPointerDown={tap("poke", sfx.pop)} />)}
       <div className="butterfly"><span className="pokeable" onPointerDown={tap("poke-big", sfx.tick)}><img src="/animals/kupu-kupu.webp" alt="" draggable={false} /></span></div>
       <div className="cover-leaf tr" /><div className="cover-leaf bl" /><div className="cover-leaf br" />
@@ -36,8 +37,6 @@ export default function Cover({ onStart, onAskReset }: { onStart: () => void; on
         <div className="bush l pokeable" onPointerDown={tap("poke", sfx.rustle)} />
         <div className="bush r pokeable" onPointerDown={tap("poke", sfx.rustle)} />
         <div className="rock pokeable" onPointerDown={tap("poke", sfx.tick)} />
-        <div className="ground-fill" />
-        <div className="ground" />
         <div className="lio start lio-wave pokeable" role="img" aria-label="Lio si Singa" onPointerDown={tap("poke-up", sfx.boing)}>
           <img className="lw-body" src={lioSrc("depan-melambai")} alt="" draggable={false} />
         </div>

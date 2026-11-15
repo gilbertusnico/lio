@@ -55,8 +55,7 @@ export default function FindGame({ letter, onDone, onSay, onPose, ask = 0 }: Pro
         onDone();
         return;
       }
-      sfx.tick();
-      sfx.ding();
+      sfx.step(next.length - 1); // nada naik tiap temuan
       onPose("jempol");
       onSay(`Bagus! Masih ada ${NUM[total - next.length]} lagi.`);
     } else {

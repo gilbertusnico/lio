@@ -168,7 +168,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       const r = advance(pts, st.prog, p);
       if (r.moved) {
         if (r.prog - st.prog >= 2 || Math.random() < 0.3) spawn(pts[r.prog], 2);
-        if (Math.floor(r.prog / 8) !== Math.floor(st.prog / 8)) sfx.tick();
+        if (Math.floor(r.prog / 6) !== Math.floor(st.prog / 6)) sfx.trace(r.prog / pts.length);
         st.prog = r.prog;
         if (r.done) strokeDone();
       } else if (r.off) {

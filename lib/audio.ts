@@ -33,6 +33,39 @@ function tone(freq: number, dur: number, type: OscillatorType = "sine", vol = 0.
   o.stop(t + dur + 0.05);
 }
 
+const SCALE = [523, 587, 659, 784, 880, 1047, 1175, 1319];
+
+/** Nada yang meluncur dari f0 ke f1. */
+function sweep(f0: number, f1: number, dur: number, vol: number) {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime, o = a.createOscillator(), g = a.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.05);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + 0.1);
+}
+
+/** Desis angin: derau yang disaring, frekuensinya naik dari f0 ke f1. */
+function noise(dur: number, f0: number, f1: number, vol: number) {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime, len = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = buf;
+  f.type = "bandpass"; f.Q.value = 1.2;
+  f.frequency.setValueAtTime(f0, t);
+  f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.35);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(a.destination); s.start(t);
+}
+
 export const sfx = {
   tick() { tone(880 + Math.random() * 240, 0.06, "sine", 0.05); },
   ding() { tone(784, 0.18, "triangle", 0.25); tone(1175, 0.3, "triangle", 0.2, 0.1); },
@@ -44,6 +77,30 @@ export const sfx = {
     tone(1319, 0.34, "triangle", 0.22, 0.22);
     [2093, 2637, 3136].forEach((f, i) => tone(f, 0.12, "sine", 0.07, 0.3 + i * 0.06));
   },
+  /** Tombol ditekan: "tap" pendek dan lembut. */
+  tap() { tone(420, 0.05, "sine", 0.11); tone(840, 0.04, "sine", 0.05, 0.012); },
+  /** Tangga nada naik (do re mi sol la do…): hitungan ke-n, temuan ke-n. */
+  step(n: number) {
+    const f = SCALE[Math.max(0, Math.min(SCALE.length - 1, n))];
+    tone(f, 0.2, "triangle", 0.22);
+    tone(f * 2, 0.14, "sine", 0.06, 0.02);
+  },
+  /** Menggores: nada naik pelan mengikuti seberapa jauh goresan (0–1). */
+  trace(frac: number) { tone(440 + 500 * Math.max(0, Math.min(1, frac)), 0.07, "sine", 0.055); },
+  /** Tangan penunjuk muncul: "pling" lembut untuk menarik perhatian. */
+  hint() { tone(1175, 0.12, "sine", 0.09); tone(1568, 0.22, "sine", 0.08, 0.09); },
+  /** Gambar diangkat untuk diseret. */
+  lift() { sweep(300, 620, 0.1, 0.13); },
+  /** Gambar menempel di tempat yang benar. */
+  snap() { tone(180, 0.06, "square", 0.05); tone(1320, 0.07, "sine", 0.12, 0.01); },
+  /** Gambar kembali ke tempatnya (dilepas di luar bayangan). */
+  back() { sweep(520, 240, 0.14, 0.1); },
+  /** Stiker terbang. */
+  whoosh() { noise(0.42, 500, 3200, 0.11); },
+  /** Tiga bintang muncul satu per satu. */
+  stars() { [2093, 2349, 2637].forEach((f, i) => tone(f, 0.16, "sine", 0.09, 0.05 + i * 0.15)); },
+  /** Kartu atau mini-game baru muncul. */
+  appear() { sweep(380, 760, 0.09, 0.08); },
   /** Lio/hewan melompat. */
   boing() {
     const a = audio();

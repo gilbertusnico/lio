@@ -69,7 +69,7 @@ export default function Game() {
     const t = setTimeout(() => {
       const a = stickerImg.current?.getBoundingClientRect();
       const b = albumBtn.current?.getBoundingClientRect();
-      if (a && b) setFly({ from: a, to: b });
+      if (a && b) { setFly({ from: a, to: b }); sfx.whoosh(); }
     }, 1700);
     return () => clearTimeout(t);
   }, [win, newSticker]);
@@ -97,12 +97,20 @@ export default function Game() {
     // Menu "Simpan gambar" saat ditekan lama, cubit-zoom dan ketuk-dua-kali-zoom di iPhone.
     const block = (e: Event) => e.preventDefault();
     const pinch = (e: TouchEvent) => { if (e.touches.length > 1) e.preventDefault(); };
+    // Bunyi "tap" untuk semua tombol. Tombol jawaban (gelembung, hewan, angka, stiker, gambar seret)
+    // tidak ikut, karena sudah punya bunyinya sendiri.
+    const tapSound = (e: Event) => {
+      const b = (e.target as Element | null)?.closest?.("button");
+      if (b && !b.matches(".qb, .qitem, .qopt, .sticker, .shadow-opt, :disabled")) { audio(); sfx.tap(); }
+    };
+    document.addEventListener("click", tapSound, true);
     window.addEventListener("popstate", onPop);
     document.addEventListener("contextmenu", block);
     document.addEventListener("gesturestart", block);
     document.addEventListener("dblclick", block);
     document.addEventListener("touchmove", pinch, { passive: false });
     return () => {
+      document.removeEventListener("click", tapSound, true);
       window.removeEventListener("popstate", onPop);
       document.removeEventListener("contextmenu", block);
       document.removeEventListener("gesturestart", block);
@@ -144,6 +152,7 @@ export default function Game() {
     setWin(false);
     resetSticker();
     setIntro(true);
+    setTimeout(() => sfx.appear(), 120); // kartu pembuka muncul
   }
 
   function startGame(g: number) {
@@ -161,7 +170,7 @@ export default function Game() {
     setPose("tepuk-tangan");
     if (game >= 2) return levelDone();
     say(praise() + " Ayo lanjut!");
-    after(() => startGame(game + 1), 1700);
+    after(() => { sfx.appear(); startGame(game + 1); }, 1700);
   }
 
   function levelDone() {
@@ -172,7 +181,7 @@ export default function Game() {
     setProgress(next);
     saveProgress(next);
     // Beri waktu centangnya terlihat, baru layar menang dengan fanfare dan konfeti.
-    after(() => { sfx.win(); fx.current?.confetti(); setWin(true); }, 1150);
+    after(() => { sfx.win(); sfx.stars(); fx.current?.confetti(); setWin(true); }, 1150);
   }
 
   function goMap() {

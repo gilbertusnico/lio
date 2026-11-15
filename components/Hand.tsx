@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { sfx } from "@/lib/audio";
 
 export type HandPoint = { x: number; y: number };
 /**
@@ -89,6 +90,7 @@ export default function Hand({ demo, restart = 0, delay = 900, now = 0 }: Props)
     const p = plan(getDemo.current());
     if (!p) return;
     busy.current = true;
+    sfx.hint();
     setRun(p);
   }, []);
   const arm = useCallback(() => {

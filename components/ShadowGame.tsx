@@ -67,7 +67,8 @@ export default function ShadowGame({ letter, onDone, onSay, onPose, ask = 0 }: P
     const c = centerOfBtn(i);
     setDrag(null);
     setOver(false);
-    if (solved || !c || !onStage(c.x, c.y)) return; // dilepas di luar bayangan: gambar kembali sendiri
+    if (solved || !c) return;
+    if (!onStage(c.x, c.y)) { sfx.back(); return; } // dilepas di luar bayangan: gambar kembali sendiri
     if (o.ch !== target.ch) {
       sfx.oops();
       onPose("sedih");
@@ -76,6 +77,7 @@ export default function ShadowGame({ letter, onDone, onSay, onPose, ask = 0 }: P
       return;
     }
     setSolved(true);
+    sfx.snap();
     sfx.ding();
     onPose("jempol");
     onSay(`Betul! Itu bayangan ${nameOf(target)}.`);
@@ -125,7 +127,7 @@ export default function ShadowGame({ letter, onDone, onSay, onPose, ask = 0 }: P
                 dragMomentum={false}
                 dragElastic={0}
                 whileDrag={{ scale: 1.16, rotate: -4 }}
-                onDragStart={() => { audio(); setDrag(o.ch); }}
+                onDragStart={() => { audio(); sfx.lift(); setDrag(o.ch); }}
                 onDrag={() => { const c = centerOfBtn(i); const v = !!c && onStage(c.x, c.y); if (v !== over) setOver(v); }}
                 onDragEnd={() => drop(o, i)}
                 onTap={tapOnly}

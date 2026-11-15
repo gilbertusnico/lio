@@ -37,7 +37,7 @@ export default function CountGame({ letter, onDone, onSay, onPose, ask = 0 }: Pr
     if (done || order.includes(i)) return;
     const next = [...order, i];
     setOrder(next);
-    sfx.tick();
+    sfx.step(next.length - 1); // nada naik tiap hitungan
     onSay(cap(NUM[next.length]) + "!");
   }
   function answer(v: number) {

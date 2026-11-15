@@ -26,7 +26,7 @@ export default function LetterMap({ progress, onPick, onAlbum }: { progress: Pro
           <img src="/ui/album.webp" alt="" draggable={false} /> Album Stiker <b>{stars}/26</b>
         </button>
       </Pop>
-      <div className="grid" id="grid">
+      <div className="grid-fit"><div className="grid" id="grid">
         {LETTERS.map((l, i) => {
           const locked = PAYWALL_ENABLED && i >= FREE_LETTERS;
           const [bg, shadow] = TILE_STYLE[i % TILE_STYLE.length];
@@ -44,7 +44,7 @@ export default function LetterMap({ progress, onPick, onAlbum }: { progress: Pro
             </Pop>
           );
         })}
-      </div>
+      </div></div>
     </section>
   );
 }

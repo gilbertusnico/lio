@@ -220,6 +220,13 @@ Butir 1–6 dan 11 selesai, dites, dan di-push ke branch `claude/adoring-thompso
   - **Pilih Huruf**: 5 kolom (6 di tablet) supaya A–Z muat tanpa menggulir di 360×640; bintang tidak terpotong; scrollbar disembunyikan.
   - **Bug yang diperbaiki** (dari `docs/qa-2026-11-13.md`): BUG-01 (🗺️ saat jeda pindah mini-game: langkah berikutnya sekarang ditahan sampai "Lanjut main", lihat `after()` di `components/Game.tsx`), BUG-02 (jari kedua di papan diabaikan), QA-01 (lint hijau lagi), UX-02, UX-03, UI-01 sampai UI-05, UI-07, UI-08, UI-10.
   - **Belum dikerjakan dari laporan QA**: QA-02 (`playwright` tidak ada di `devDependencies`; untuk `npm run e2e` di laptop: `npm i -D playwright && npx playwright install chromium`), UX-04 sampai UX-07, A11Y-01 sampai A11Y-04, QA-03, TECH-01 sampai TECH-03, UI-06, UI-09.
+- **Revisi 15 Nov (2)**:
+  - **Tangan penunjuk mini-game 1** sekarang juga muncul segera (begitu jari diangkat) saat anak keluar garis 2 kali di goresan yang sama, dan saat mengetuk di luar titik mulai. Prop `now` di `components/Hand.tsx`.
+  - **Cocokkan bayangan = seret**: gambar harus DISERET ke bayangan (Motion `drag` + `dragSnapToOrigin`). Dilepas di dekat bayangan sudah dihitung; gambar salah atau dilepas di luar kembali sendiri; hanya diketuk = gambar tidak diterima dan tangan mencontohkan cara menyeret. Tangan mencontohkan seret dari gambar yang bergantian, jadi tidak membocorkan jawaban. "Hitung benda" tetap ketuk.
+  - **Centang selesai**: tiap mini-game selesai muncul centang hijau besar di papan + bunyi `sfx.correct()`; layar menang muncul ±1,1 detik kemudian.
+  - **Layar menang**: fanfare lebih panjang (`sfx.win()`), Lio naik-turun terus (`winBob`).
+  - **Ikon teks diganti SVG** (`components/Icon.tsx`): ↩ ↺ ▶ ➜ ✅ tampil beda di iOS (emoji kotak biru) dan Android. Jangan pakai karakter itu lagi di tombol.
+  - **Pilih Huruf tidak bisa digulir**: kotak huruf menyesuaikan tinggi layar lewat container query (`.grid-fit`), `overflow: visible`. Dites sampai 360×560.
 - **Belum dites di HP asli.** Semua tes memakai Chromium headless (360×640, 390×844, 768×1024).
 
 ### Catatan untuk model berikutnya

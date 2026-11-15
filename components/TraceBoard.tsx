@@ -48,6 +48,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
   /** Titik contoh gerakan tangan untuk goresan yang sedang dikerjakan. */
   const handRef = useRef<() => HandDemo>(() => ({ pts: [] }));
   const [demoKey, setDemoKey] = useState(0);
+  const [hintNow, setHintNow] = useState(0);
   const cb = useRef({ onDone, onSay, onPose, onOops, onStrokes, onLower });
   const sizeRef = useRef(size);
   useEffect(() => {
@@ -62,7 +63,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     const color = letter.color;
-    const st = { pointer: -1, phase: (startLower ? "lower" : "upper") as Phase, stroke: 0, prog: 0, drawing: false, lastOops: 0, t0: 0 };
+    const st = { offs: 0, pointer: -1, phase: (startLower ? "lower" : "upper") as Phase, stroke: 0, prog: 0, drawing: false, lastOops: 0, t0: 0 };
     const sparks: Spark[] = [];
     const timers: ReturnType<typeof setTimeout>[] = [];
     const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms));
@@ -123,6 +124,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       const pts = g.strokes[st.stroke];
       spawn(pts[pts.length - 1], 18);
       st.stroke++;
+      st.offs = 0;
       st.prog = 0;
       st.drawing = false;
       report();
@@ -171,6 +173,8 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
         st.drawing = false;
         sfx.oops();
         cb.current.onOops();
+        // Keluar garis dua kali di goresan yang sama: anak kemungkinan tidak tahu arahnya → contohkan segera.
+        if (++st.offs >= 2) { st.offs = 0; setHintNow((n) => n + 1); }
         const now = Date.now();
         if (now - st.lastOops > 3000) {
           cb.current.onSay("Ups! Ikuti garisnya ya.");
@@ -196,7 +200,8 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       } else {
         sfx.tick();
         cb.current.onPose("menunjuk");
-        cb.current.onSay(st.prog === 0 ? "Mulai dari titik bernomor ya! 👆" : "Lanjutkan dari titik yang berkedip ya!");
+        cb.current.onSay(st.prog === 0 ? "Mulai dari titik bernomor ya!" : "Lanjutkan dari titik yang berkedip ya!");
+        setHintNow((n) => n + 1); // mengetuk di tempat yang salah → tangan menunjukkan titik mulainya
       }
     };
     const move = (e: PointerEvent) => {
@@ -367,7 +372,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
   return (
     <>
       <canvas id="board" ref={canvasRef} style={{ width: size, height: size }} aria-label={`Papan menebalkan huruf ${letter.ch}`} />
-      <Hand demo={() => handRef.current()} restart={demoKey} delay={1100} />
+      <Hand demo={() => handRef.current()} restart={demoKey} delay={1100} now={hintNow} />
     </>
   );
 }

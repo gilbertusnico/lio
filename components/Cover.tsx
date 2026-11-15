@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Leaves from "./Leaves";
 import Pop from "./Pop";
+import Icon from "./Icon";
 import { lioSrc } from "./Lio";
 
 /** Cover: pemandangan hutan, judul, Lio melambai, tombol Mulai Main. */
@@ -42,7 +43,7 @@ export default function Cover({ onStart, onReset }: { onStart: () => void; onRes
         </Pop>
       </h1>
       <Pop className="sub" delay={0.3}>🌿 Petualangan Huruf 🌿</Pop>
-      <Pop className="start-wrap" delay={0.6}><button className="btn green" id="btnStart" onClick={onStart}>▶ Mulai Main</button></Pop>
+      <Pop className="start-wrap" delay={0.6}><button className="btn green" id="btnStart" onClick={onStart}><Icon name="play" /> Mulai Main</button></Pop>
     </section>
   );
 }

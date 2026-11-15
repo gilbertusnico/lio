@@ -38,6 +38,18 @@ async function traceGlyph(page: Page, g: Glyph, pose: Pose) {
   }
 }
 
+/** Menyeret satu elemen ke tengah elemen lain, seperti jari anak. */
+async function dragTo(page: Page, from: ReturnType<Page["locator"]>, to: ReturnType<Page["locator"]>) {
+  const a = (await from.boundingBox())!, b = (await to.boundingBox())!;
+  await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2 - 12, { steps: 3 });
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 12 });
+  await page.waitForTimeout(80);
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+}
+
 async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<void>) {
   const L = LETTERS.find((l) => l.ch === ch)!;
   const lo = ch.toLowerCase();
@@ -92,6 +104,9 @@ async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<v
   await traceGlyph(page, lower, layout(upper, lower).lower);
   await page.waitForTimeout(1500);
   await shot(`${ch}-4-berdua`);
+  await page.locator(".done-check").waitFor({ timeout: 4000 }); // centang besar tanda mini-game selesai
+  await page.waitForTimeout(350);
+  await shot(`${ch}-4b-centang`);
   if (ch === letters[0]) {
     // 🗺️ ditekan tepat saat jeda pindah mini-game: dialog tampil, game TIDAK jalan diam-diam di baliknya,
     // dan "Lanjut main" meneruskan ke mini-game berikutnya.
@@ -142,7 +157,30 @@ async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<v
       const word = await page.locator(".shadow-stage").getAttribute("data-word");
       if (round === 2 && word !== L.word) throw new Error(`${ch}: ronde terakhir bukan hewan huruf ini`);
       if (round === 0) await shot(`${ch}-6-bayangan`);
-      await page.locator(`.shadow-opt[aria-label="${word}"]`).click({ force: true });
+      const opt = page.locator(`.shadow-opt[aria-label="${word}"]`);
+      // Hanya diketuk: belum selesai (harus diseret ke bayangan)
+      await opt.click({ force: true });
+      await page.waitForTimeout(250);
+      if (await page.locator(".shadow-img.reveal").count()) throw new Error(`${ch}: bayangan selesai hanya dengan diketuk`);
+      // Gambar yang salah diseret ke bayangan: tidak selesai
+      if (round === 0) {
+        const bad = page.locator(`.shadow-opt:not([aria-label="${word}"])`).first();
+        await dragTo(page, bad, page.locator(".shadow-stage"));
+        await page.waitForTimeout(500);
+        if (await page.locator(".shadow-img.reveal").count()) throw new Error(`${ch}: gambar salah diterima`);
+      }
+      if (round === 1) {
+        // Seret pelan sambil mengambil tangkapan layar di tengah gerakan, lalu lepas di bayangan
+        const a = (await opt.boundingBox())!, b = (await page.locator(".shadow-stage").boundingBox())!;
+        await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(b.x + b.width / 2 + 30, b.y + b.height / 2 + 40, { steps: 10 });
+        await page.waitForTimeout(150);
+        await shot(`${ch}-6-seret`);
+        await page.mouse.up();
+        await page.waitForTimeout(250);
+      } else await dragTo(page, opt, page.locator(".shadow-stage"));
+      if (!(await page.locator(".shadow-img.reveal").count())) throw new Error(`${ch}: gambar benar yang diseret ke bayangan tidak diterima`);
       await page.waitForTimeout(1400);
     }
   }
@@ -202,7 +240,7 @@ async function main() {
     await page.locator("#grid").waitFor();
     if (!(await page.locator(".tile", { hasText: new RegExp(`^${ch}`) }).locator(".badge").count())) throw new Error(`${ch}: bintang tidak muncul`);
     // Main ulang: jenis mini-game 3 berikutnya harus kebalikannya
-    const kind2 = await playLetter(page, ch, async () => {});
+    const kind2 = await playLetter(page, ch, (n) => shot(n + "-ulang"));
     if (kind2 === kind) throw new Error(`${ch}: mini-game 3 sama dengan yang terakhir (${kind})`);
     await page.locator("#winNext").click({ force: true });
     await page.locator("#win").waitFor({ state: "detached" });
@@ -212,6 +250,12 @@ async function main() {
     console.log(`✓ ${ch}: ${kind} lalu ${kind2}`);
   }
   await shot("peta-akhir");
+  const map = await page.evaluate(() => {
+    const g = document.querySelector("#grid")!, m = document.querySelector("#map")!;
+    const last = [...document.querySelectorAll(".tile")].pop()!.getBoundingClientRect();
+    return { scroll: g.scrollHeight - g.clientHeight, style: getComputedStyle(g).overflowY, mapScroll: m.scrollHeight - m.clientHeight, bottom: last.bottom, vh: innerHeight };
+  });
+  if (map.style !== "visible" || map.bottom > map.vh) throw new Error("Pilih Huruf: kotak huruf tidak muat / masih bisa digulir " + JSON.stringify(map));
   await browser.close();
   if (errors.length) throw new Error("error JS:\n" + errors.join("\n"));
   console.log(`LULUS (${VW}x${VH}): ${letters.join(" ")}`);

@@ -13,6 +13,7 @@ import Leaves from "./Leaves";
 import Fx, { type FxHandle } from "./Fx";
 import Paywall from "./Paywall";
 import Album from "./Album";
+import Icon from "./Icon";
 import { LIO_POSES, lioSrc, type PoseName } from "./Lio";
 
 type Screen = "start" | "map" | "play";
@@ -33,6 +34,7 @@ export default function Game() {
   const [album, setAlbum] = useState(false);
   const [newSticker, setNewSticker] = useState(false);
   const [fly, setFly] = useState<{ from: DOMRect; to: DOMRect } | null>(null);
+  const [flash, setFlash] = useState({ round: -1, n: 0 }); // centang "selesai" untuk mini-game di ronde ini
   const [landed, setLanded] = useState(false); // stiker baru sudah sampai di ikon album
   const [pay, setPay] = useState<null | "locked" | "win">(null);
   const [bubble, setBubble] = useState("…");
@@ -113,11 +115,13 @@ export default function Game() {
   }
 
   function gameDone() {
-    if (game >= 2) return levelDone();
-    sfx.ding();
+    // Tiap mini-game selesai: centang besar + bunyi "berhasil".
+    setFlash((f) => ({ round, n: f.n + 1 }));
+    sfx.correct();
     setPose("tepuk-tangan");
+    if (game >= 2) return levelDone();
     say(praise() + " Ayo lanjut!");
-    after(() => startGame(game + 1), 1600);
+    after(() => startGame(game + 1), 1700);
   }
 
   function levelDone() {
@@ -127,9 +131,8 @@ export default function Game() {
     setFly(null);
     setProgress(next);
     saveProgress(next);
-    sfx.win();
-    fx.current?.confetti();
-    after(() => setWin(true), 450);
+    // Beri waktu centangnya terlihat, baru layar menang dengan fanfare dan konfeti.
+    after(() => { sfx.win(); fx.current?.confetti(); setWin(true); }, 1150);
   }
 
   function goMap() {
@@ -168,7 +171,7 @@ export default function Game() {
         {screen === "play" && (
           <motion.div key="play" {...fade}>
             <PlayScreen
-              letter={L} game={game} mini3={mini3} round={round}
+              letter={L} game={game} mini3={mini3} round={round} flash={flash.round === round ? flash.n : 0}
               bubble={bubble} pose={pose} musicOn={musicOn}
               onSay={say} onPose={setPose} onGameDone={gameDone}
               onBack={() => setLeaving(true)} onRetry={() => startGame(game)} onJump={(g) => { if (g < game) startGame(g); }} onToggleMusic={toggleMusic}
@@ -188,8 +191,8 @@ export default function Game() {
               </div>
               <h3 className="intro-word">{L.ch} untuk {L.word}</h3>
               <div className="row" style={{ justifyContent: "center", marginTop: 12 }}>
-                <button className="btn ghost" onClick={goMap} aria-label="Kembali">↩</button>
-                <button className="btn green" id="introGo" onClick={() => { audio(); setIntro(false); startGame(0); }}>Mulai ▶</button>
+                <button className="btn ghost" id="introBack" onClick={goMap} aria-label="Kembali"><Icon name="back" /></button>
+                <button className="btn green" id="introGo" onClick={() => { audio(); setIntro(false); startGame(0); }}>Mulai <Icon name="play" /></button>
               </div>
             </div>
           </motion.div>
@@ -204,7 +207,7 @@ export default function Game() {
               <img className="leave-lio" src={lioSrc("sedih")} alt="" draggable={false} />
               <h3 className="leave-title">Berhenti main?</h3>
               <div className="leave-btns">
-                <button className="btn green" id="leaveNo" onClick={() => { setLeaving(false); const fn = pending.current; pending.current = null; fn?.(); }}>▶ Lanjut main</button>
+                <button className="btn green" id="leaveNo" onClick={() => { setLeaving(false); const fn = pending.current; pending.current = null; fn?.(); }}><Icon name="play" /> Lanjut main</button>
                 <button className="btn ghost" id="leaveYes" onClick={goMap}>🗺️ Keluar</button>
               </div>
             </div>
@@ -228,7 +231,7 @@ export default function Game() {
                   scale: [1, 1.15, 0.3], rotate: [-8, 8, 24], opacity: [1, 1, 0.7],
                 }}
                 transition={{ duration: 0.9, ease: "easeInOut", times: [0, 0.3, 1] }}
-                onAnimationComplete={() => { setFly(null); setLanded(true); sfx.ding(); }}
+                onAnimationComplete={() => { setFly(null); setLanded(true); sfx.pop(); }}
               />
             )}
             <button
@@ -255,7 +258,7 @@ export default function Game() {
               <h3 id="winText">Huruf {L.ch} selesai!</h3>
               <div className="stars"><span>⭐</span><span>⭐</span><span>⭐</span></div>
               <div className="row" style={{ justifyContent: "center", marginTop: 16 }}>
-                <button className="btn ghost" id="winRetry" onClick={() => { setWin(false); resetSticker(); setMini3(pickMini3(mini3)); startGame(0); }}>↺ Lagi</button>
+                <button className="btn ghost" id="winRetry" onClick={() => { setWin(false); resetSticker(); setMini3(pickMini3(mini3)); startGame(0); }}><Icon name="retry" /> Lagi</button>
                 <button
                   className="btn green" id="winNext"
                   onClick={() => {
@@ -264,7 +267,7 @@ export default function Game() {
                     else goMap();
                   }}
                 >
-                  Lanjut ➜
+                  Lanjut <Icon name="next" />
                 </button>
               </div>
             </div>

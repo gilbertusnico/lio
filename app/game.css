@@ -216,3 +216,54 @@ img.badge { position: absolute; top: -10px; right: -8px; width: 26px; height: 26
 .album-chip img { width: 26px; height: 26px; }
 .album-chip.bump { animation: chipBump .55s cubic-bezier(.2,1.6,.4,1); }
 @keyframes chipBump { 0% { transform: scale(1); } 35% { transform: scale(1.35) rotate(-8deg); } 100% { transform: scale(1); } }
+
+/* ===== Revisi 15 Nov (2) ===== */
+/* Ikon SVG di dalam tombol */
+.ico { display: inline-block; vertical-align: -0.14em; flex: none; }
+.btn .ico-play, .btn .ico-next { width: .82em; height: .82em; vertical-align: -0.06em; }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; }
+.icon-btn .ico { width: 26px; height: 26px; }
+#introBack { display: inline-flex; align-items: center; justify-content: center; padding: 12px 18px; }
+#introBack .ico { width: 26px; height: 26px; }
+button.step .ico { display: block; }
+button.step { display: flex; align-items: center; justify-content: center; }
+
+/* Centang besar tiap mini-game selesai */
+.done-check { position: absolute; left: 50%; top: 50%; width: 46%; aspect-ratio: 1; margin: -23% 0 0 -23%; z-index: 6; pointer-events: none;
+  filter: drop-shadow(0 8px 14px rgba(20,110,60,.35)); }
+.done-check svg { display: block; width: 100%; height: 100%; }
+
+/* Layar menang: Lio naik-turun terus */
+.lio.lio-win { animation: lioPop .5s cubic-bezier(.2,1.6,.4,1), winBob .95s ease-in-out .5s infinite; }
+@keyframes winBob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-20px) rotate(2deg); } }
+@media (prefers-reduced-motion: reduce) { .lio.lio-win { animation: lioPop .5s; } }
+
+/* Pilih Huruf: kotak huruf menyesuaikan tinggi layar, jadi A–Z selalu muat dan TIDAK bisa digulir */
+#map { overflow: hidden; }
+.grid-fit { flex: 1 1 0; min-height: 0; width: 100%; display: flex; justify-content: center; align-items: flex-start;
+  container-type: size; padding: 12px 10px 8px; }
+#map .grid { --cols: 5; --rows: 6; overflow: visible; padding: 0; max-width: none; gap: min(10px, 2.4cqw);
+  width: min(100cqw, 100cqh * var(--cols) / var(--rows), 440px); aspect-ratio: var(--cols) / var(--rows);
+  grid-template-columns: repeat(var(--cols), 1fr); grid-template-rows: repeat(var(--rows), 1fr); container-type: inline-size; }
+#map .grid .tile-wrap { min-height: 0; min-width: 0; }
+#map .grid .tile-wrap > .tile { aspect-ratio: auto; height: 100%; font-size: 10.5cqw; border-radius: 4.4cqw; }
+#map .grid img.badge { width: 6.5cqw; height: 6.5cqw; top: -2.2cqw; right: -1.8cqw; }
+@media (min-width: 600px) and (min-height: 800px) {
+  #map .grid { --cols: 6; --rows: 5; gap: 16px; width: min(100cqw, 100cqh * var(--cols) / var(--rows), 660px); }
+  #map .grid .tile-wrap > .tile { font-size: 8.2cqw; border-radius: 3.6cqw; }
+  #map .grid img.badge { width: 5.4cqw; height: 5.4cqw; }
+}
+@media (min-height: 720px) { #map { padding-bottom: 70px; } }
+
+/* Cocokkan bayangan: gambar diseret ke bayangan */
+.shadow-opt { touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none; }
+.shadow-opt:active { cursor: grabbing; }
+.shadow-slot { position: relative; }
+.shadow-slot.lifting { z-index: 5; }
+.shadow-slot.lifting .shadow-opt { box-shadow: 0 14px 22px rgba(29,74,43,.28); }
+.qopt.shadow-opt.wrong { animation: none; opacity: .55; }
+.shadow-opt img.nope { animation: shake .4s; }
+.shadow-opt.used { visibility: hidden; }
+.shadow-stage { transition: background .2s, box-shadow .2s; }
+.shadow-stage.waiting { box-shadow: inset 0 0 0 4px rgba(255,201,60,.55); }
+.shadow-stage.over { background: radial-gradient(circle at 50% 45%, #ffe9a3 0%, #fff7dc 75%); box-shadow: inset 0 0 0 5px #ffc93c; }

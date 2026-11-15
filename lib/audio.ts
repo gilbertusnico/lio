@@ -37,7 +37,25 @@ export const sfx = {
   tick() { tone(880 + Math.random() * 240, 0.06, "sine", 0.05); },
   ding() { tone(784, 0.18, "triangle", 0.25); tone(1175, 0.3, "triangle", 0.2, 0.1); },
   oops() { tone(220, 0.18, "square", 0.06); tone(180, 0.2, "square", 0.05, 0.12); },
-  win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.28, "triangle", 0.22, i * 0.12)); tone(1319, 0.5, "triangle", 0.2, 0.5); },
+  /** Satu mini-game selesai dengan benar: dua nada naik + kilau. */
+  correct() {
+    tone(659, 0.14, "triangle", 0.24);
+    tone(988, 0.16, "triangle", 0.24, 0.11);
+    tone(1319, 0.34, "triangle", 0.22, 0.22);
+    [2093, 2637, 3136].forEach((f, i) => tone(f, 0.12, "sine", 0.07, 0.3 + i * 0.06));
+  },
+  /** Stiker/hadiah mendarat. */
+  pop() { tone(520, 0.08, "sine", 0.2); tone(1040, 0.14, "sine", 0.16, 0.05); },
+  /** Huruf selesai: fanfare meriah ±2,4 detik (arpeggio naik, akor panjang, bass, gemerincing). */
+  win() {
+    [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, 0.22, "triangle", 0.24, i * 0.11));
+    [262, 392].forEach((f, i) => tone(f, 0.3, "sine", 0.3, i * 0.33));
+    const t = 0.82;
+    [523, 659, 784, 1047, 1568].forEach((f) => tone(f, 1.25, "triangle", 0.14, t));
+    tone(131, 1.2, "sine", 0.32, t);
+    tone(1568, 0.5, "square", 0.035, t);
+    for (let i = 0; i < 14; i++) tone(1800 + Math.random() * 2400, 0.1, "sine", 0.06, t + 0.1 + i * 0.09);
+  },
 };
 
 /* ---------- Musik latar: C mayor riang (C–Am–F–G), 104 BPM ---------- */

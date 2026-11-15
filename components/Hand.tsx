@@ -26,6 +26,8 @@ type Props = {
   restart?: number;
   /** Jeda sebelum contoh pertama (ms). */
   delay?: number;
+  /** Naikkan nilainya untuk minta contoh SEGERA (begitu jari diangkat), tanpa menunggu 5 detik. */
+  now?: number;
 };
 
 const IDLE_MS = 5000;
@@ -68,13 +70,14 @@ function plan({ pts: raw, glide = false }: HandDemo): Plan | null {
  * Hilang begitu layar disentuh, dan tidak muncul selama jari masih menempel.
  * Digambar di atas layar lewat portal (tidak ikut transform pembungkus animasi).
  */
-export default function Hand({ demo, restart = 0, delay = 900 }: Props) {
+export default function Hand({ demo, restart = 0, delay = 900, now = 0 }: Props) {
   const [run, setRun] = useState<Plan | null>(null);
   const node = useRef<HTMLDivElement>(null);
   const getDemo = useRef(demo);
   const busy = useRef(false);
   const down = useRef(false);
   const idle = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wanted = useRef(false);
   useEffect(() => { getDemo.current = demo; });
 
   const stop = useCallback(() => {
@@ -99,6 +102,14 @@ export default function Hand({ demo, restart = 0, delay = 900 }: Props) {
     return () => clearTimeout(t);
   }, [restart, delay, start]);
 
+  // Diminta segera (anak salah berulang atau mengetuk tempat yang salah): tampil begitu jari diangkat.
+  useEffect(() => {
+    if (!now) return;
+    if (down.current) { wanted.current = true; return; }
+    const t = setTimeout(start, 350);
+    return () => clearTimeout(t);
+  }, [now, start]);
+
   // Sentuhan menghentikan contoh; diam 5 detik setelah jari diangkat → contoh lagi.
   useEffect(() => {
     const press = () => {
@@ -109,6 +120,11 @@ export default function Hand({ demo, restart = 0, delay = 900 }: Props) {
     const release = () => {
       down.current = false;
       arm();
+      if (wanted.current) {
+        wanted.current = false;
+        if (idle.current) clearTimeout(idle.current);
+        idle.current = setTimeout(start, 350);
+      }
     };
     arm();
     window.addEventListener("pointerdown", press, true);
@@ -120,7 +136,7 @@ export default function Hand({ demo, restart = 0, delay = 900 }: Props) {
       window.removeEventListener("pointercancel", release, true);
       if (idle.current) clearTimeout(idle.current);
     };
-  }, [arm, stop]);
+  }, [arm, stop, start]);
 
   // Gerakan digerakkan sendiri (rAF) supaya tetap jalan walau perangkat minta gerak dikurangi:
   // tangan ini petunjuk utama untuk anak yang belum bisa membaca.

@@ -6,6 +6,7 @@ import { LETTERS } from "@/data/letters";
 import type { Progress } from "@/lib/progress";
 import { audio, sfx } from "@/lib/audio";
 import Pop from "./Pop";
+import Icon from "./Icon";
 
 /**
  * Album stiker: 26 kotak, satu per huruf.
@@ -37,7 +38,7 @@ export default function Album({ progress, onClose }: { progress: Progress; onClo
       transition={{ duration: 0.22, ease: "easeOut" }}
     >
       <div className="album-head">
-        <button className="btn ghost icon-btn" onClick={() => { audio(); onClose(); }} aria-label="Tutup album">↩</button>
+        <button className="btn ghost icon-btn" onClick={() => { audio(); onClose(); }} aria-label="Tutup album"><Icon name="back" /></button>
         <h2><img src="/ui/album.webp" alt="" draggable={false} /> Album Stiker</h2>
         <div className="album-count">{got}/26</div>
       </div>

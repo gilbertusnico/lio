@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
 import { LETTERS, SHADOW_CONFUSABLE, type Letter } from "@/data/letters";
 import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
 import Pop from "./Pop";
-import Hand, { centerOf, type HandDemo, type HandPoint } from "./Hand";
+import Hand, { centerOf, type HandDemo } from "./Hand";
 import type { PoseName } from "./Lio";
 
 /**
- * Mini-game 3b: cocokkan bayangan, 3 ronde. Tiap ronde: satu bayangan hewan, pilih 1 dari 3 gambar.
+ * Mini-game 3b: cocokkan bayangan, 3 ronde. Tiap ronde: satu bayangan hewan dan 3 gambar;
+ * anak MENYERET gambar yang cocok ke bayangannya (bukan sekadar mengetuk).
  * Dua ronde pertama hewan lain (supaya tidak bisa ditebak dari hewan yang jalan-jalan di papan),
  * ronde terakhir hewan huruf ini.
  */
@@ -35,21 +37,37 @@ export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
   const [r, setR] = useState(0);
   const [wrong, setWrong] = useState<{ ch: string; n: number }[]>([]);
   const [solved, setSolved] = useState(false);
+  const [drag, setDrag] = useState<string | null>(null); // huruf gambar yang sedang diseret
+  const [over, setOver] = useState(false); // gambar sedang berada di atas bayangan
+  const [hint, setHint] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stage = useRef<HTMLDivElement>(null);
   const optsEls = useRef<(HTMLButtonElement | null)[]>([]);
+  const demoIdx = useRef(0);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const { target, opts } = rounds[r];
-  // Contoh gerakan tangan: menunjuk bayangannya, lalu ketiga gambar bergantian (tanpa membocorkan jawaban).
+
+  // Contoh gerakan tangan: menyeret satu gambar ke bayangan. Gambarnya bergantian tiap contoh,
+  // jadi tangan menunjukkan CARANYA tanpa membocorkan gambar mana yang benar.
   const demo = (): HandDemo => {
     if (solved) return { pts: [] };
-    return { pts: [stage.current, ...optsEls.current].map((el) => centerOf(el)).filter((p): p is HandPoint => !!p) };
+    const from = centerOf(optsEls.current[demoIdx.current++ % opts.length]);
+    const to = centerOf(stage.current);
+    return from && to ? { pts: [from, to], glide: true } : { pts: [] };
   };
 
+  /** Titik (koordinat layar) ada di atas area bayangan? Diberi kelonggaran supaya tidak harus pas. */
+  const onStage = (x: number, y: number) => {
+    const b = stage.current?.getBoundingClientRect();
+    return !!b && x > b.left - 16 && x < b.right + 16 && y > b.top - 16 && y < b.bottom + 24;
+  };
+  const centerOfBtn = (i: number) => centerOf(optsEls.current[i]);
 
-  function pick(o: Letter) {
-    audio();
-    if (solved) return;
+  function drop(o: Letter, i: number) {
+    const c = centerOfBtn(i);
+    setDrag(null);
+    setOver(false);
+    if (solved || !c || !onStage(c.x, c.y)) return; // dilepas di luar bayangan: gambar kembali sendiri
     if (o.ch !== target.ch) {
       sfx.oops();
       onPose("sedih");
@@ -68,13 +86,23 @@ export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
       setWrong([]);
       setSolved(false);
       onPose("menunjuk");
-      onSay(r + 1 === ROUNDS - 1 ? "Yang terakhir! Bayangan siapa ini?" : "Kalau yang ini, bayangan siapa?");
+      onSay(r + 1 === ROUNDS - 1 ? "Yang terakhir! Seret gambarnya ke bayangan." : "Kalau yang ini? Seret gambarnya ke bayangan.");
     }, 1100);
+  }
+
+  /** Hanya diketuk (tidak diseret): gambar bergoyang dan tangan mencontohkan cara menyeret. */
+  function tapOnly() {
+    audio();
+    if (solved) return;
+    sfx.tick();
+    onPose("menunjuk");
+    onSay("Seret gambarnya ke bayangan ya!");
+    setHint((n) => n + 1);
   }
 
   return (
     <>
-      <div className="shadow-stage" ref={stage} data-word={target.word}>
+      <div className={`shadow-stage${over ? " over" : ""}${drag ? " waiting" : ""}`} ref={stage} data-word={target.word}>
         <div className="shadow-rounds">
           {rounds.map((_, i) => <span key={i} className={i < r || (i === r && solved) ? "done" : i === r ? "on" : ""} />)}
         </div>
@@ -85,22 +113,30 @@ export default function ShadowGame({ letter, onDone, onSay, onPose }: Props) {
       <div className="qopts shadow-opts">
         {opts.map((o, i) => {
           const w = wrong.find((x) => x.ch === o.ch);
+          const used = solved && o.ch === target.ch;
           return (
-            <Pop key={`${r}${o.ch}`} i={i} step={0.08} delay={0.25}>
-            <button
-              key={w ? `w${w.n}` : "b"}
-              ref={(node) => { optsEls.current[i] = node; }}
-              className={`btn ghost qopt shadow-opt${w ? " wrong" : ""}${solved && o.ch === target.ch ? " right" : ""}`}
-              onClick={() => pick(o)}
-              aria-label={o.word}
-            >
-              <img src={o.img} alt="" draggable={false} />
-            </button>
+            <Pop key={`${r}${o.ch}`} i={i} step={0.08} delay={0.25} className={`shadow-slot${drag === o.ch ? " lifting" : ""}`}>
+              <motion.button
+                ref={(node) => { optsEls.current[i] = node; }}
+                className={`btn ghost qopt shadow-opt${w ? " wrong" : ""}${used ? " used" : ""}`}
+                aria-label={o.word}
+                drag={!solved}
+                dragSnapToOrigin
+                dragMomentum={false}
+                dragElastic={0}
+                whileDrag={{ scale: 1.16, rotate: -4 }}
+                onDragStart={() => { audio(); setDrag(o.ch); }}
+                onDrag={() => { const c = centerOfBtn(i); const v = !!c && onStage(c.x, c.y); if (v !== over) setOver(v); }}
+                onDragEnd={() => drop(o, i)}
+                onTap={tapOnly}
+              >
+                <img key={w ? `w${w.n}` : "b"} className={w ? "nope" : ""} src={o.img} alt="" draggable={false} />
+              </motion.button>
             </Pop>
           );
         })}
       </div>
-      <Hand demo={demo} restart={r} />
+      <Hand demo={demo} restart={r} now={hint} delay={1200} />
     </>
   );
 }

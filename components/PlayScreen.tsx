@@ -8,7 +8,9 @@ import FindGame from "./FindGame";
 import CountGame from "./CountGame";
 import ShadowGame from "./ShadowGame";
 import Critter from "./Critter";
+import { motion } from "motion/react";
 import Pop from "./Pop";
+import Icon from "./Icon";
 import { LioTalk, type PoseName } from "./Lio";
 
 type Props = {
@@ -16,6 +18,8 @@ type Props = {
   game: number;
   mini3: Mini3;
   round: number;
+  /** > 0 saat mini-game ronde ini baru saja selesai: tampilkan centang besar. */
+  flash: number;
   bubble: string;
   pose: { name: PoseName; n: number };
   musicOn: boolean;
@@ -68,7 +72,7 @@ export default function PlayScreen(p: Props) {
     said.current = round;
     if (game === 1) onSay(`Cari dan ketuk semua huruf ${L.ch} besar dan ${lo} kecil! Ada empat.`);
     if (game === 2)
-      onSay(mini3 === "count" ? `Ada berapa ${word}? Ketuk satu-satu untuk menghitung, lalu pilih angkanya.` : "Bayangan siapa ini? Pilih gambar yang cocok!");
+      onSay(mini3 === "count" ? `Ada berapa ${word}? Ketuk satu-satu untuk menghitung, lalu pilih angkanya.` : "Seret gambar yang cocok ke bayangannya!");
   }, [round, game, mini3, L, lo, word, onSay]);
 
   const common = { letter: L, onDone: p.onGameDone, onSay: p.onSay, onPose: p.onPose };
@@ -91,7 +95,7 @@ export default function PlayScreen(p: Props) {
             onClick={() => p.onJump(i)}
             aria-label={i < game ? `Main lagi langkah ${i + 1}` : `Langkah ${i + 1}`}
           >
-            {i < game ? "✅" : icon}
+            {i < game ? <Icon name="check" size={26} /> : icon}
           </button>
           </Pop>
         ))}
@@ -128,6 +132,16 @@ export default function PlayScreen(p: Props) {
             {game === 2 && mini3 === "shadow" && <ShadowGame key={p.round} {...common} />}
           </div>
         )}
+        {p.flash > 0 && (
+          <motion.div
+            key={p.flash} className="done-check" aria-hidden
+            initial={{ scale: 0, opacity: 0, rotate: -25 }}
+            animate={{ scale: [0, 1.25, 1, 1, 0.9], opacity: [0, 1, 1, 1, 0], rotate: [-25, 6, 0, 0, 0] }}
+            transition={{ duration: 1.25, times: [0, 0.22, 0.34, 0.8, 1], ease: "easeOut" }}
+          >
+            <Icon name="check" size="100%" />
+          </motion.div>
+        )}
       </div>
       </Pop>
       <div className="dots" id="dots" style={{ visibility: game === 0 ? "visible" : "hidden" }}>
@@ -146,7 +160,7 @@ export default function PlayScreen(p: Props) {
             else p.onRetry();
           }}
         >
-          ↺
+          <Icon name="retry" />
         </button>
       </Pop>
     </section>

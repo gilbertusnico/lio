@@ -340,3 +340,18 @@ html, body { overscroll-behavior: none; position: fixed; inset: 0; width: 100%; 
 .cover-stage .dirt { position: absolute; left: 50%; bottom: -26px; width: min(82%, 400px); aspect-ratio: 4 / 1; transform: translateX(-50%);
   z-index: 0; pointer-events: none; background: url("/ui/cover-dirt.svg") center / 100% 100% no-repeat; }
 .cover-stage .rock { bottom: 6px; }
+
+/* ===== Semak & daun bawah cover (17 Nov, revisi) =====
+   Semak lama terpotong datar karena daun mendatar keluar dari viewBox SVG-nya. Diganti gambar baru
+   (public/ui/cover-bush.svg) yang punya ruang di bawah, dibuat lebih besar, dan daun sudut bawah
+   dipindah ke depan semak (tetap di belakang tombol Mulai Main) supaya pangkal semak tertutup alami. */
+#start .cover-stage .bush { width: 66%; max-width: 380px; aspect-ratio: 360 / 230; bottom: -34px;
+  background: url("/ui/cover-bush.svg") center bottom / 100% 100% no-repeat; }
+#start .cover-stage .bush.l { left: -22%; }
+#start .cover-stage .bush.r { right: -22%; left: auto; bottom: -30px; width: 60%; }
+#start > .cover-leaf.bl, #start > .cover-leaf.br { z-index: 2; width: clamp(190px, 56vw, 340px); bottom: -22px; }
+#start > .cover-leaf.bl { left: -22px; }
+#start > .cover-leaf.br { right: -22px; }
+#start > .start-wrap.start-wrap { position: relative; z-index: 3 !important; }
+/* Semak hijau tua di belakang Lio: tinggi ikut lebar layar supaya di tablet tidak terpotong datar. */
+#start > .cover-floor::after { height: auto; aspect-ratio: 400 / 150; }

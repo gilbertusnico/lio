@@ -36,6 +36,7 @@ export default function Cover({ onStart, onAskReset }: { onStart: () => void; on
       <Pop className="cover-stage" delay={0.38} from={0.6} style={{ transformOrigin: "50% 100%" }}>
         <div className="bush l pokeable" onPointerDown={tap("poke", sfx.rustle)} />
         <div className="bush r pokeable" onPointerDown={tap("poke", sfx.rustle)} />
+        <div className="dirt" />
         <div className="rock pokeable" onPointerDown={tap("poke", sfx.tick)} />
         <div className="lio start lio-wave pokeable" role="img" aria-label="Lio si Singa" onPointerDown={tap("poke-up", sfx.boing)}>
           <img className="lw-body" src={lioSrc("depan-melambai")} alt="" draggable={false} />

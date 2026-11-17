@@ -326,3 +326,17 @@ html, body { overscroll-behavior: none; position: fixed; inset: 0; width: 100%; 
     linear-gradient(180deg, #c6e7a3 0%, #b4de8f 54%, #a3d57d 100%); }
 #start > .cover-floor::before { content: ""; position: absolute; left: -2%; right: -2%; top: -18px; height: 36px;
   border-radius: 50%; background: #c6e7a3; filter: blur(7px); opacity: .72; }
+
+/* ===== Cover bagian bawah mengikuti mockup (17 Nov) =====
+   Gundukan tanah cokelat berumput di bawah kaki Lio, semak hijau tua di kiri-kanan belakang,
+   dan rumput di sepanjang tepi bawah layar (gambar di public/ui/cover-*.svg). */
+#start > .cover-floor {
+  background:
+    url("/ui/cover-grass.svg") left bottom / auto 46px repeat-x,
+    linear-gradient(180deg, #c6e7a3 0%, #b4de8f 50%, #9fd27a 100%);
+}
+#start > .cover-floor::after { content: ""; position: absolute; left: 0; right: 0; top: -70px; height: 170px; pointer-events: none;
+  background: url("/ui/cover-bushes.svg") center top / 100% auto no-repeat; }
+.cover-stage .dirt { position: absolute; left: 50%; bottom: -26px; width: min(82%, 400px); aspect-ratio: 4 / 1; transform: translateX(-50%);
+  z-index: 0; pointer-events: none; background: url("/ui/cover-dirt.svg") center / 100% 100% no-repeat; }
+.cover-stage .rock { bottom: 6px; }

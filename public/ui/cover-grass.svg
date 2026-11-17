@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 50">
+  <!-- Rumput di sepanjang tepi bawah layar (diulang ke samping) -->
+  <g fill="none" stroke-linecap="round" stroke-width="3.4">
+    <g stroke="#3f9a3f"><path d="M6 50 2 24M12 50l4-30M20 50l-2-22M30 50l7-26M44 50l-5-30M52 50l3-20M64 50l-3-28M74 50l6-24M86 50l-6-26M94 50l4-30M106 50l-3-22M114 50l6-26"/></g>
+    <g stroke="#5fbb4f" stroke-width="3"><path d="M16 50l-6-18M38 50l2-18M58 50l6-16M80 50l-4-18M100 50l5-16"/></g>
+  </g>
+</svg>

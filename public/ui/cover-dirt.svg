@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
+  <!-- Gundukan tanah cokelat tempat Lio berdiri, dengan rumput di tepinya -->
+  <ellipse cx="200" cy="62" rx="196" ry="34" fill="#7e5233"/>
+  <ellipse cx="200" cy="56" rx="190" ry="30" fill="#a8734a"/>
+  <ellipse cx="196" cy="50" rx="150" ry="20" fill="#bd8758"/>
+  <ellipse cx="170" cy="46" rx="70" ry="9" fill="#c99868" opacity=".8"/>
+  <g fill="#8d5f3c"><ellipse cx="120" cy="62" rx="7" ry="3"/><ellipse cx="262" cy="66" rx="9" ry="3.5"/><ellipse cx="214" cy="74" rx="5" ry="2.5"/><ellipse cx="80" cy="54" rx="4" ry="2"/></g>
+  <g fill="none" stroke-linecap="round">
+    <g stroke="#3f9a3f" stroke-width="3.2">
+      <path d="M8 66 2 44M14 68l2-26M20 68l9-22M30 72l-3-20M36 72l8-16"/>
+      <path d="M392 66l6-22M386 68l-2-26M380 68l-9-22M370 72l3-20M364 72l-8-16"/>
+      <path d="M70 90l-6-20M76 92l3-22M84 92l9-16M150 96l-4-18M156 96l4-20M162 96l9-14"/>
+      <path d="M240 96l-6-18M246 96l3-20M254 96l8-14M318 92l-5-20M324 92l4-22M332 90l9-16"/>
+    </g>
+    <g stroke="#5fbb4f" stroke-width="2.6">
+      <path d="M24 70l-6-18M378 70l5-18M110 94l-3-16M116 94l5-14M200 98l-2-16M206 98l6-12M286 96l-4-16M292 96l5-14"/>
+    </g>
+  </g>
+</svg>

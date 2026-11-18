@@ -16,7 +16,7 @@ Baca file ini dulu sebelum mengerjakan apa pun. Bagian 1–3 adalah yang berlaku
   - MacBook pemilik (2019) lemot: build dan tooling harus ringan.
   - Pembuatan gambar hanya tool gratis (ChatGPT/Gemini/Bing); jangan pakai Creative Claw atau Kling.
 - **Menunggu keputusan pemilik** (ditunda, jangan dikerjakan dulu): suara rekaman asli untuk instruksi (anak 5 tahun belum bisa membaca; usulan: rekam 20–30 kalimat kunci, saya yang memasang); gambar bagian bawah mockup cover sebagai latar (opsional, pemilik perlu mengirim gambarnya).
-- **Belum dikerjakan (opsional)**: ekspor/pindah progres antar HP (UX-07), pembaca layar dan fokus keyboard (A11Y-01, 02, 04), indikator gulir album (di HP pendek 26 kotak muat tanpa menggulir, jadi tidak mendesak). Laporan QA lengkap: `docs/qa-2026-11-13.md`.
+- **Belum dikerjakan (opsional)**: ekspor/pindah progres antar HP (UX-07), indikator gulir album (di HP pendek 26 kotak muat tanpa menggulir, jadi tidak mendesak). Laporan QA lengkap: `docs/qa-2026-11-13.md`. Pembaca layar dan fokus keyboard (A11Y) sengaja dilewati (keputusan pemilik 18 Nov, anak 5 tahun pakai sentuhan).
 - Catat ke pemilik/orang tua: progres di `localStorage` = per browser per HP; buka di Chrome atau Safari, bukan browser dalam WhatsApp.
 
 ## 2. Keputusan produk (versi Next.js, diputuskan 11 Nov 2026)

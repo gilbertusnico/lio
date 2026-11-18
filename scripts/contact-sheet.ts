@@ -48,7 +48,7 @@ async function main() {
   const out = path.resolve("docs/lembar-huruf.png");
   const tmp = path.resolve(".sheet.html");
   fs.writeFileSync(tmp, html);
-  const b = await chromium.launch();
+  const b = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined });
   const pg = await b.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
   await pg.goto("file://" + tmp);
   await pg.screenshot({ path: out, fullPage: true });

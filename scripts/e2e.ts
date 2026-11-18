@@ -209,7 +209,7 @@ async function playLetter(page: Page, ch: string, shot: (n: string) => Promise<v
 }
 
 async function main() {
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined });
   const page = await browser.newPage({ viewport: { width: VW, height: VH }, deviceScaleFactor: 1 });
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));

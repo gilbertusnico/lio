@@ -27,12 +27,13 @@ Buka http://localhost:3000. Untuk hasil akhir seperti di hosting: `npm run build
 | `npm run e2e -- A G` | Memainkan huruf penuh di browser (lihat catatan) |
 | `npm run animals` / `npm run ui` / `npm run icons` | Membuat ulang gambar hewan, ikon antarmuka, dan ikon aplikasi |
 
-`npm run e2e` dan `npm run sheet` butuh Playwright, yang tidak dipasang bersama proyek supaya instalasinya ringan:
+`npm run e2e` dan `npm run sheet` memakai Playwright (sudah ada di `devDependencies`), tetapi browsernya diunduh terpisah:
 
 ```bash
-npm i -D playwright
 npx playwright install chromium
 ```
+
+Kalau sudah punya Chromium sendiri, set `PW_CHROMIUM=/jalan/ke/chromium` sebagai gantinya.
 
 Tes e2e juga butuh `out/` disajikan di port 4173 (`npx serve out -l 4173`).
 
@@ -43,6 +44,8 @@ Tes e2e juga butuh `out/` disajikan di port 4173 (`npx serve out -l 4173`).
 - `data/letters.ts` — 26 huruf: hewan, warna, pengecoh
 - `data/glyphs.ts` — goresan huruf kapital dan huruf kecil
 - `lib/` — engine tracing, audio, progres, pengaturan (`lib/config.ts`)
+- `scripts/` — tes e2e, lembar kontak, pembuat gambar
+- `.github/workflows/ci.yml` — CI (lint, tes, build)
 - `CLAUDE.md` — semua keputusan produk dan catatan pengerjaan
 
 ## Untuk orang tua

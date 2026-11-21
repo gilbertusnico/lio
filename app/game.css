@@ -465,19 +465,19 @@ html, body { overscroll-behavior: none; position: fixed; inset: 0; width: 100%; 
 #numap .map-album { margin-bottom: 8px; }
 @media (max-height: 600px) { #numap .map-album { margin-bottom: 4px; } }
 
-/* Buah angka tergantung di ranting di atas papan tebalkan, jatuh saat angka selesai */
-.fruit-hang { position: absolute; top: -54px; right: 1%; width: 140px; height: 51px; z-index: 2; pointer-events: none; }
-.fh-branch { position: absolute; inset: 0; width: 100%; height: 100%; }
-.fh-swing { position: absolute; top: 19px; left: 70px; width: 62px; transform-origin: 50% 0; animation: fhSwing 2.4s ease-in-out infinite alternate; }
-.fh-stem { display: block; width: 3px; height: 12px; margin: 0 auto; background: #5b8f2e; border-radius: 2px; }
+/* Buah angka tergantung di ujung sulur yang menjuntai dari atas layar (di belakang bar atas dan ikon langkah),
+   jatuh saat angka selesai. Sulur + buah berayun sebagai satu bandul panjang yang porosnya di atas layar. */
+#play .top, #play .steps { position: relative; z-index: 3; }
+.fruit-hang { position: absolute; top: -50px; right: 4%; width: 62px; height: 62px; z-index: 2; pointer-events: none; }
+.fh-swing { position: absolute; inset: 0; transform-origin: 50% -640px; animation: fhSwing 2.6s ease-in-out infinite alternate; }
+.fh-vine { position: absolute; bottom: calc(100% - 14px); left: 50%; width: 48px; height: 640px; margin-left: -24px; max-width: none; }
 .fh-react { transform-origin: 50% 0; }
-.fh-fruit { display: block; width: 62px; height: 62px; object-fit: contain; pointer-events: auto; cursor: pointer; margin-top: -4px; }
+.fh-fruit { display: block; width: 62px; height: 62px; object-fit: contain; pointer-events: auto; cursor: pointer; }
 .fh-react.kick { animation: fhKick 1.1s ease-out; }
 .fh-react.shake { animation: critShake .5s; }
-@keyframes fhSwing { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
-@keyframes fhKick { 0% { transform: rotate(0); } 18% { transform: rotate(24deg); } 40% { transform: rotate(-16deg); } 62% { transform: rotate(9deg); } 82% { transform: rotate(-4deg); } 100% { transform: rotate(0); } }
-/* Jatuh: tangkai tertinggal di ranting, buah jatuh ke pojok bawah papan lalu memantul */
-.fruit-hang.dropped .fh-swing { animation: none; }
+@keyframes fhSwing { from { transform: rotate(-.9deg); } to { transform: rotate(.9deg); } }
+@keyframes fhKick { 0% { transform: rotate(0); } 18% { transform: rotate(22deg); } 40% { transform: rotate(-15deg); } 62% { transform: rotate(8deg); } 82% { transform: rotate(-3deg); } 100% { transform: rotate(0); } }
+/* Jatuh: sulur tetap di tempatnya, buah jatuh ke pojok bawah papan lalu memantul */
 .fruit-hang.dropped .fh-drop { animation: fhDrop 1.1s forwards; }
 .fruit-hang.dropped .fh-fruit { pointer-events: none; }
 @keyframes fhDrop {

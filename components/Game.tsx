@@ -5,9 +5,14 @@ import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { LETTERS } from "@/data/letters";
 import { FREE_LETTERS, PAYWALL_ENABLED } from "@/lib/config";
 import { audio, musicPref, setMusicPref, sfx, startMusic, stopMusic } from "@/lib/audio";
-import { emptyProgress, loadProgress, pickMini3, saveProgress, type Mini3, type Progress } from "@/lib/progress";
+import {
+  emptyNumProgress, emptyProgress, loadNumProgress, loadProgress, pickMini3, saveNumProgress, saveProgress,
+  type Mini3, type NumProgress, type Progress,
+} from "@/lib/progress";
 import Cover from "./Cover";
+import LessonMenu from "./LessonMenu";
 import LetterMap from "./LetterMap";
+import NumberMap from "./NumberMap";
 import PlayScreen from "./PlayScreen";
 import Leaves from "./Leaves";
 import Fx, { type FxHandle } from "./Fx";
@@ -18,12 +23,12 @@ import Emo from "./Emo";
 import { poke } from "@/lib/poke";
 import { LIO_POSES, lioSrc, type PoseName } from "./Lio";
 
-type Screen = "start" | "map" | "play";
+type Screen = "start" | "menu" | "map" | "nummap" | "play";
 const PRAISE = ["Bagus!", "Pintar!", "Hebat!", "Keren!"];
 const praise = () => PRAISE[Math.floor(Math.random() * PRAISE.length)];
 const fade = { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.2 } };
 
-/** Mesin layar: Cover → Pilih Huruf → (kartu pembuka) → 3 mini-game → layar menang. */
+/** Mesin layar: Cover → Pilih Pelajaran (Huruf / Angka) → Pilih Huruf → (kartu pembuka) → 3 mini-game → layar menang. */
 export default function Game() {
   const [screen, setScreen] = useState<Screen>("start");
   const [cur, setCur] = useState(0);
@@ -43,6 +48,7 @@ export default function Game() {
   const [bubble, setBubble] = useState("…");
   const [pose, setPoseState] = useState<{ name: PoseName; n: number }>({ name: "menunjuk", n: 0 });
   const [progress, setProgress] = useState<Progress>(emptyProgress);
+  const [numProgress, setNumProgress] = useState<NumProgress>(emptyNumProgress);
   const [musicOn, setMusicOn] = useState(true);
   const fx = useRef<FxHandle>(null);
   const stickerImg = useRef<HTMLImageElement>(null);
@@ -58,6 +64,7 @@ export default function Game() {
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setProgress(loadProgress());
+    setNumProgress(loadNumProgress());
     setMusicOn(musicPref());
     LIO_POSES.forEach((p) => { new Image().src = lioSrc(p); }); // supaya ganti pose tidak berkedip
   }, []);
@@ -87,7 +94,8 @@ export default function Game() {
       if (win) { goMap(); return true; }
       if (intro) { setIntro(false); return true; }
       if (screen === "play") { setLeaving(true); return true; }
-      if (screen === "map") { setScreen("start"); return true; }
+      if (screen === "map" || screen === "nummap") { setScreen("menu"); return true; }
+      if (screen === "menu") { setScreen("start"); return true; }
       return false; // di cover: biarkan browser keluar seperti biasa
     };
   });
@@ -197,6 +205,9 @@ export default function Game() {
     const p = emptyProgress();
     setProgress(p);
     saveProgress(p);
+    const n = emptyNumProgress();
+    setNumProgress(n);
+    saveNumProgress(n);
   }
 
   return (
@@ -207,9 +218,22 @@ export default function Game() {
         {screen === "start" && (
           <motion.div key="start" {...fade}>
             <Cover
-              onStart={() => { audio(); if (musicOn) startMusic(); setScreen("map"); }}
+              onStart={() => { audio(); if (musicOn) startMusic(); setScreen("menu"); }}
               onAskReset={() => setResetAsk(true)}
             />
+          </motion.div>
+        )}
+        {screen === "menu" && (
+          <motion.div key="menu" {...fade}>
+            <LessonMenu
+              letterStars={stickerCount} numberStars={Object.values(numProgress.done).filter(Boolean).length}
+              onLetters={() => { audio(); setScreen("map"); }} onNumbers={() => { audio(); setScreen("nummap"); }}
+            />
+          </motion.div>
+        )}
+        {screen === "nummap" && (
+          <motion.div key="nummap" {...fade}>
+            <NumberMap progress={numProgress} />
           </motion.div>
         )}
         {screen === "map" && (
@@ -343,8 +367,12 @@ export default function Game() {
 
       <AnimatePresence>{album && <Album key="album" progress={progress} onClose={() => setAlbum(false)} />}</AnimatePresence>
 
-      {screen === "map" && !intro && (
-        <button className="btn ghost icon-btn home-float" id="btnHome" style={{ display: "block" }} aria-label="Kembali ke beranda" onClick={() => { audio(); setScreen("start"); }}>
+      {(screen === "menu" || screen === "map" || screen === "nummap") && !intro && (
+        <button
+          className="btn ghost icon-btn home-float" id="btnHome" style={{ display: "block" }}
+          aria-label={screen === "menu" ? "Kembali ke beranda" : "Kembali ke pilihan pelajaran"}
+          onClick={() => { audio(); setScreen(screen === "menu" ? "start" : "menu"); }}
+        >
           <Emo name="home" />
         </button>
       )}
@@ -362,7 +390,7 @@ export default function Game() {
             <div className="panel">
               <img className="leave-lio" src={lioSrc("sedih")} alt="" draggable={false} />
               <h3 className="leave-title">Hapus semua bintang dan stiker?</h3>
-              <p className="small">Untuk orang tua: semua huruf akan kembali seperti baru.</p>
+              <p className="small">Untuk orang tua: semua huruf dan angka akan kembali seperti baru.</p>
               <div className="leave-btns">
                 <button className="btn green" id="resetNo" onClick={() => setResetAsk(false)}>Jangan</button>
                 <button className="btn ghost" id="resetYes" onClick={() => { resetProgress(); setResetAsk(false); sfx.pop(); }}>Ya, hapus</button>

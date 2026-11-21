@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 import Leaves from "./Leaves";
 import Pop from "./Pop";
 import Icon from "./Icon";
-import Emo from "./Emo";
 import { lioSrc } from "./Lio";
 import { audio, sfx } from "@/lib/audio";
 import { poke } from "@/lib/poke";
@@ -54,7 +53,6 @@ export default function Cover({ onStart, onAskReset }: { onStart: () => void; on
           {holding && <i className="hold-ring" style={{ animationDuration: `${HOLD_MS}ms` }} />}
         </Pop>
       </h1>
-      <Pop className="sub" delay={0.3}><Emo name="herb" /> Petualangan Huruf <Emo name="herb" className="flip" /></Pop>
       <Pop className="start-wrap" delay={0.6}><button className="btn green" id="btnStart" onClick={onStart}><Icon name="play" /> Mulai Main</button></Pop>
     </section>
   );

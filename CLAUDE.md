@@ -19,6 +19,23 @@ Baca file ini dulu sebelum mengerjakan apa pun. Bagian 1–3 adalah yang berlaku
 - **Belum dikerjakan (opsional)**: ekspor/pindah progres antar HP (UX-07), indikator gulir album (di HP pendek 26 kotak muat tanpa menggulir, jadi tidak mendesak). Laporan QA lengkap: `docs/qa-2026-11-13.md`. Pembaca layar dan fokus keyboard (A11Y) sengaja dilewati (keputusan pemilik 18 Nov, anak 5 tahun pakai sentuhan).
 - Catat ke pemilik/orang tua: progres di `localStorage` = per browser per HP; buka di Chrome atau Safari, bukan browser dalam WhatsApp.
 
+## 1b. Petualangan Angka (branch `fitur/angka`, mulai 21 Nov 2026; BELUM di-merge ke `main`)
+
+Modul kedua setelah huruf. Keputusan pemilik (21 Nov):
+- **Alur layar**: Cover (tanpa pita "Petualangan Huruf") → "Mulai Main" → **Pilih Pelajaran** (dua kartu besar: Huruf dan Angka, `components/LessonMenu.tsx`) → Pilih Huruf (`map`) atau Pilih Angka (`nummap`, `components/NumberMap.tsx`). Tombol 🏠 di menu = cover; di Pilih Huruf/Angka = menu. Tombol back HP mengikuti (map/nummap → menu → cover).
+- **Rentang**: angka **1–10** (10 ditulis "1" lalu "0"). Semua terbuka, bebas pilih, bintang saat 3 mini-game selesai.
+- **Satu level = satu angka = 3 mini-game**: (1) **tebalkan angka** (engine tracing yang sama), (2) **hitung benda** (ketuk satu-satu lalu pilih angka; dipakai ulang dari huruf), (3) **acak, tidak sama dengan main terakhir**: *cocokkan jumlah* (seret kartu angka ke kelompok benda yang sama banyak), *ambilkan N* (seret N buah ke keranjang Lio), atau *cari angka* (gelembung angka, pengecoh mirip 6/9, 2/5, 1/7; angka yang ketemu dipasangkan dengan kelompok titik). **"Hubungkan titik" tidak dipakai.**
+- **Buah** (benda yang dihitung + stiker): 1 Apel, 2 Jeruk, 3 Pisang, 4 Mangga, 5 Anggur, 6 Semangka, 7 Nanas, 8 Stroberi, 9 Pir, 10 Kelapa. Gambar Noto Emoji di `public/fruits/` (`npm run fruits`), data di `data/numbers.ts`.
+- **Album**: satu album, dua tab (Huruf | Angka). Stiker angka = buah.
+- **Progres angka** terpisah: key `lio-progress-angka-v1` (`loadNumProgress`/`saveNumProgress` di `lib/progress.ts`); reset progres (tekan lama Lio) menghapus huruf dan angka.
+- **Hati-hati tracing angka**: 8 satu goresan yang menyilang dirinya sendiri (jendela `LOOK` bisa meloncat di titik persilangan), 4 dan 5 punya dua goresan dengan urutan khusus. Wajib dites otomatis seperti 52 bentuk huruf (`tests/`).
+- **Tahap kerja** (centang saat selesai, commit + push ke `fitur/angka`):
+  - [x] 1. Menu Pilih Pelajaran, cover baru, progres angka terpisah, Pilih Angka (kotak 1–10 belum membuka level: tampil "segera hadir"), buah dibundel, tes e2e diperbarui.
+  - [ ] 2. Data goresan angka 1–10 (`data/numberGlyphs.ts`) + tes otomatis + lembar kontak.
+  - [ ] 3. Tiga mini-game angka + layar menang (generalisasi `Game.tsx`/`PlayScreen.tsx` yang sekarang terikat huruf).
+  - [ ] 4. Tab angka di album + stiker buah + hewan/buah terbang ke album.
+  - [ ] 5. Tes 360×640, 390×844, tablet; perbarui CLAUDE.md; tunggu pemilik bilang merge.
+
 ## 2. Keputusan produk (versi Next.js, diputuskan 11 Nov 2026)
 
 - **Stack**: Next.js (App Router, TypeScript) + Tailwind + **Motion (motion.dev)** untuk transisi/popup/reaksi. Gerakan latar terus-menerus (awan, daun) = CSS. Papan tracing = `<canvas>` + Pointer Events. Situs statis (`out/`), tanpa DB, login, Drizzle/Neon/Auth.js. Komponen 21st.dev tidak dipakai (semua kebutuhan sudah ada dengan gaya hutan sendiri). PWA: manifest di `app/manifest.ts` (tampilan tegak).
@@ -44,7 +61,7 @@ Baca file ini dulu sebelum mengerjakan apa pun. Bagian 1–3 adalah yang berlaku
 ## 3. Panduan kode
 
 - **Letak kode** (di akar repo): `app/` (layout, `legacy.css` dari prototipe, `game.css` tambahan, manifest), `components/` (layar + mini-game), `data/letters.ts` (26 huruf: hewan, warna, pengecoh), `data/glyphs.ts` (goresan kapital + kecil), `lib/` (engine tracing murni, audio, progres, config), `scripts/` (e2e, lembar kontak, pembuat gambar), `tests/` (tes goresan), `public/` (lio, animals, ui, ikon), `prototype/index.html` (prototipe lama, acuan saja), `docs/` (QA, lembar huruf).
-- **Perintah**: `npm run dev | build | lint | test | sheet | e2e -- A G | animals | ui | icons`. `build` menghasilkan `out/`. `e2e` butuh `out/` disajikan di port 4173 (`npx serve out -l 4173`) dan browser Chromium: `npx playwright install chromium`, atau set `PW_CHROMIUM=/jalan/ke/chromium` kalau sudah punya. `sheet` (lembar kontak `docs/lembar-huruf.png`) juga memakai Playwright. Playwright ada di `devDependencies` (paketnya kecil; browsernya diunduh terpisah).
+- **Perintah**: `npm run dev | build | lint | test | sheet | e2e -- A G | animals | fruits | ui | icons`. `build` menghasilkan `out/`. `e2e` butuh `out/` disajikan di port 4173 (`npx serve out -l 4173`) dan browser Chromium: `npx playwright install chromium`, atau set `PW_CHROMIUM=/jalan/ke/chromium` kalau sudah punya. `sheet` (lembar kontak `docs/lembar-huruf.png`) juga memakai Playwright. Playwright ada di `devDependencies` (paketnya kecil; browsernya diunduh terpisah).
 - **CI**: `.github/workflows/ci.yml` menjalankan lint, `npm test`, dan build di tiap push ke `main` dan pull request. `package-lock.json` sengaja di-`.gitignore` (keputusan pemilik), jadi CI memakai `npm install`.
 - **Font**: Grandstander (UI) + Andika (huruf belajar), dibundel lewat fontsource (tanpa Google Fonts saat runtime). Keduanya a satu tangkai dan g ekor kait; Baloo 2 tidak dipakai karena a-nya dua tingkat.
 - **Engine tracing** (`lib/trace.ts`, `lib/traceLayout.ts`): koordinat 0–100; garis buku atas 8, tengah 44, dasar 80, ekor sampai 98. Tiap huruf = array stroke (polyline, `arc()` untuk lengkung, `densify()` tiap `STEP = 1.5`). Progres `prog` = indeks titik di stroke aktif. `pointerdown` hanya mulai kalau jari ≤ `TOL_START = 15` dari titik `prog`; `pointermove` memajukan `prog` ke indeks terjauh dalam jendela `LOOK = 12` yang jaraknya ≤ `TOL = 11`; titik terdekat > `OFF = 19` = keluar jalur. Sudut tajam dan titik putar balik harus benar-benar dicapai jari (`corners()`), kalau tidak goresan naik-turun selesai sendiri. Stroke selesai saat `prog >= len - 2`. Memakai `getCoalescedEvents()`; jari kedua di papan diabaikan. Saat menebalkan huruf kecil, huruf dan garis diperbesar sampai ±1,6× (`layout()`). Kapital I digambar dengan garis atas-bawah supaya beda dari l kecil. Tes `tests/glyphs.test.ts` menelusuri semua 52 bentuk huruf.

@@ -29,7 +29,6 @@
   #start h1{font-size:clamp(34px,8vw,58px);margin:8px 0 0;line-height:1.05;color:#ff6b4a;text-shadow:0 4px 0 #fff}
   #start h1 .t1{display:block;font-size:clamp(28px,7vw,40px);color:var(--ink);text-shadow:0 3px 0 #fff}
   #start h1 .t2{display:block;font-size:clamp(68px,18vw,104px);line-height:.95;color:#ff8a1f;text-shadow:0 5px 0 #fff,0 9px 0 rgba(36,48,94,.12);letter-spacing:1px}
-  #start .sub{font-size:22px;font-weight:700;margin-bottom:18px}
   .note{font-size:14px;font-weight:500;opacity:.75;max-width:420px;margin-top:14px}
 
   /* Map */
@@ -144,8 +143,6 @@
   #start h1 .t2{display:inline-block;font-size:clamp(76px,21vw,116px);line-height:.92;
     background:linear-gradient(180deg,#ffc83d 0%,#ff9a1f 55%,#ff7414 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
     text-shadow:none;filter:drop-shadow(0 4px 0 #fff) drop-shadow(0 8px 6px rgba(120,60,0,.18))}
-  #start .sub{order:2;margin:4px 0 6px;padding:2px 18px;border-radius:999px;font-size:clamp(17px,4.6vw,21px);color:var(--ink);
-    background:linear-gradient(180deg,#ffec8a,#ffd43e);box-shadow:0 3px 0 #e2b21c}
   #start .lio.start{order:3;height:clamp(200px,36vh,320px);margin:6px 0 10px}
   #btnStart{order:4;min-width:min(78vw,300px);font-size:26px;padding:12px 28px}
   #start .note{order:5;margin-top:12px;opacity:.8;color:var(--ink-soft);background:#ffffffb0;border-radius:14px;padding:4px 10px}
@@ -215,8 +212,6 @@
   #start h1 .t2{font-size:clamp(96px,28vw,150px);line-height:.9;
     filter:drop-shadow(0 0 0 #fff) drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 5px 0 #fff) drop-shadow(0 10px 10px rgba(150,70,0,.22))}
   #start h1 .t2.sparkle:after{width:.42em;height:.42em;top:.02em;right:-.5em}
-  #start .sub{min-width:min(82vw,360px);padding:6px 22px;margin:6px 0 2px;font-size:clamp(19px,5.4vw,24px);color:#1b5a2c;
-    background:linear-gradient(180deg,#fff08f,#ffd53b);box-shadow:0 4px 0 #e0ae15,0 8px 14px rgba(160,120,0,.18)}
   .cover-stage{order:3;position:relative;width:calc(100% + 32px);display:flex;justify-content:center;align-items:flex-end;margin:8px 0 18px}
   #start .cover-stage .lio.start{position:relative;z-index:2;height:clamp(230px,40vh,370px);margin:0 0 6px;animation:none}
   .cover-stage .bush{position:absolute;bottom:-8px;width:50%;max-width:280px;aspect-ratio:6/5;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20240%20200%27%3E%3Cg%20transform%3D%27translate%28120%20205%29%20rotate%28-172%29%27%3E%3Cpath%20d%3D%27M0%200%20C26%20-30%2086%20-30%20120%200%20C86%2030%2026%2030%200%200Z%27%20fill%3D%27%232f8f3e%27/%3E%3Cpath%20d%3D%27M4%200%20L112%200%27%20stroke%3D%27%238fd47f%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%20opacity%3D%27.5%27/%3E%3C/g%3E%3Cg%20transform%3D%27translate%28120%20205%29%20rotate%28-150%29%27%3E%3Cpath%20d%3D%27M0%200%20C30%20-34%2097%20-34%20135%200%20C97%2034%2030%2034%200%200Z%27%20fill%3D%27%233fa34d%27/%3E%3Cpath%20d%3D%27M4%200%20L127%200%27%20stroke%3D%27%239fe08d%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%20opacity%3D%27.5%27/%3E%3C/g%3E%3Cg%20transform%3D%27translate%28120%20205%29%20rotate%28-126%29%27%3E%3Cpath%20d%3D%27M0%200%20C31%20-36%20101%20-36%20140%200%20C101%2036%2031%2036%200%200Z%27%20fill%3D%27%2357bd52%27/%3E%3Cpath%20d%3D%27M4%200%20L132%200%27%20stroke%3D%27%23b8ef9f%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%20opacity%3D%27.5%27/%3E%3C/g%3E%3Cg%20transform%3D%27translate%28120%20205%29%20rotate%28-100%29%27%3E%3Cpath%20d%3D%27M0%200%20C29%20-34%2094%20-34%20130%200%20C94%2034%2029%2034%200%200Z%27%20fill%3D%27%2346ad4c%27/%3E%3Cpath%20d%3D%27M4%200%20L122%200%27%20stroke%3D%27%23a8e693%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%20opacity%3D%27.5%27/%3E%3C/g%3E%3Cg%20transform%3D%27translate%28120%20205%29%20rotate%28-76%29%27%3E%3Cpath%20d%3D%27M0%200%20C30%20-36%2099%20-36%20138%200%20C99%2036%2030%2036%200%200Z%27%20fill%3D%27%236fcf5c%27/%3E%3Cpath%20d%3D%27M4%200%20L130%200%27%20stroke%3D%27%23c9f5b2%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%20opacity%3D%27.5%27/%3E%3C/g%3E%3Cg%20transform%3D%27translate%28120%20205%29%20rotate%28-52%29%27%3E%3Cpath%20d%3D%27M0%200%20C28%20-32%2092%20-32%20128%200%20C92%2032%2028%2032%200%200Z%27%20fill%3D%27%232f8f3e%27/%3E%3Cpath%20d%3D%27M4%200%20L120%200%27%20stroke%3D%27%238fd47f%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%20opacity%3D%27.5%27/%3E%3C/g%3E%3Cg%20transform%3D%27translate%28120%20205%29%20rotate%28-28%29%27%3E%3Cpath%20d%3D%27M0%200%20C26%20-30%2085%20-30%20118%200%20C85%2030%2026%2030%200%200Z%27%20fill%3D%27%233fa34d%27/%3E%3Cpath%20d%3D%27M4%200%20L110%200%27%20stroke%3D%27%239fe08d%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%20opacity%3D%27.5%27/%3E%3C/g%3E%3Cg%20transform%3D%27translate%28120%20205%29%20rotate%28-8%29%27%3E%3Cpath%20d%3D%27M0%200%20C22%20-26%2072%20-26%20100%200%20C72%2026%2022%2026%200%200Z%27%20fill%3D%27%2357bd52%27/%3E%3Cpath%20d%3D%27M4%200%20L92%200%27%20stroke%3D%27%23b8ef9f%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27%20opacity%3D%27.5%27/%3E%3C/g%3E%3C/svg%3E") bottom/contain no-repeat;z-index:1}
@@ -232,7 +227,6 @@
     #start{padding-top:44px;gap:0}
     #start h1 .t1{font-size:28px}
     #start h1 .t2{font-size:78px}
-    #start .sub{font-size:17px;padding:3px 16px;min-width:0}
     .cover-stage{margin:4px 0 14px}
     #start .cover-stage .lio.start{height:30vh}
     #btnStart{font-size:24px;padding:9px 24px}
@@ -241,7 +235,6 @@
   @media (min-width:600px) and (min-height:800px){
     #start h1 .t1{font-size:56px}
     #start h1 .t2{font-size:170px}
-    #start .sub{font-size:28px;min-width:440px}
     .cover-stage{max-width:760px}
     #start .cover-stage .lio.start{height:44vh;max-height:none}
     #btnStart{min-width:440px;font-size:36px}
@@ -297,7 +290,6 @@
 
   #start h1 .t1{font-size:clamp(40px,11vw,60px)}
   #start h1 .t2{font-size:clamp(120px,35vw,190px)}
-  #start .sub{font-size:clamp(22px,6.2vw,30px);min-width:min(88vw,420px);padding:7px 24px}
   #start .cover-stage .lio.start{height:clamp(260px,47vh,470px)}
   #start .note{font-size:12px;margin-top:6px}
 
@@ -308,13 +300,11 @@
   @media (max-height:720px){
     #start h1 .t1{font-size:32px}
     #start h1 .t2{font-size:96px}
-    #start .sub{font-size:19px;min-width:0}
     #start .cover-stage .lio.start{height:36vh}
   }
   @media (min-width:600px) and (min-height:800px){
     #start h1 .t1{font-size:64px}
     #start h1 .t2{font-size:200px}
-    #start .sub{font-size:32px;min-width:480px}
     #start .cover-stage .lio.start{height:48vh}
   }
   @media (prefers-reduced-motion: reduce){ .cover-leaf,#btnStart{animation:none !important} }

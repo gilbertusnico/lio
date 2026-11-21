@@ -11,6 +11,7 @@
     "test": "tsx --test tests/*.test.ts",
     "sheet": "tsx scripts/contact-sheet.ts",
     "animals": "node scripts/build-animals.mjs",
+    "fruits": "node scripts/build-fruits.mjs",
     "e2e": "tsx scripts/e2e.ts",
     "icons": "node scripts/build-icons.mjs",
     "ui": "node scripts/build-ui.mjs"

@@ -220,12 +220,24 @@ async function main() {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.locator("#btnStart").click({ force: true });
+  await page.locator("#menu").waitFor();
+  await page.locator(".lesson-card.letters").click({ force: true });
   await page.locator("#grid").waitFor();
 
-  // Tombol back HP: mundur satu layar di dalam game (peta → cover, kartu pembuka → peta, main → "Berhenti main?")
+  // Tombol back HP: mundur satu layar di dalam game (peta → menu → cover, kartu pembuka → peta, main → "Berhenti main?")
+  await page.goBack();
+  await page.locator("#menu").waitFor();
   await page.goBack();
   await page.locator("#btnStart").waitFor();
   await page.locator("#btnStart").click({ force: true });
+  await page.locator("#menu").waitFor();
+  // Pilih Angka: 10 kotak, tombol 🏠 kembali ke menu
+  await page.locator(".lesson-card.numbers").click({ force: true });
+  await page.locator("#numap").waitFor();
+  if ((await page.locator(".numtile").count()) !== 10) throw new Error("Pilih Angka harus punya 10 kotak");
+  await page.locator("#btnHome").click({ force: true });
+  await page.locator("#menu").waitFor();
+  await page.locator(".lesson-card.letters").click({ force: true });
   await page.locator("#grid").waitFor();
   await page.locator(".tile").first().click({ force: true });
   await page.locator("#introGo").waitFor();
@@ -285,6 +297,8 @@ async function main() {
   });
   if (map.style !== "visible" || map.bottom > map.vh) throw new Error("Pilih Huruf: kotak huruf tidak muat / masih bisa digulir " + JSON.stringify(map));
   // Reset progres: tekan lama "Lio" 3 detik → konfirmasi bergaya game → "Jangan" membatalkan, "Ya, hapus" menghapus
+  await page.locator("#btnHome").click({ force: true });
+  await page.locator("#menu").waitFor();
   await page.locator("#btnHome").click({ force: true });
   await page.locator("#btnStart").waitFor();
   await page.waitForTimeout(900);

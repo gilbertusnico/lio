@@ -23,6 +23,28 @@ export function saveProgress(p: Progress) {
   } catch {}
 }
 
+/**
+ * Progres angka (Petualangan Angka) disimpan terpisah dari huruf, supaya progres huruf tidak terganggu.
+ * done["1".."10"] = angka yang ketiga mini-gamenya selesai; last3 = jenis mini-game 3 terakhir (diisi nanti).
+ */
+export type NumProgress = { done: Record<string, boolean>; last3: Record<string, string> };
+const NUM_KEY = "lio-progress-angka-v1";
+export const emptyNumProgress = (): NumProgress => ({ done: {}, last3: {} });
+
+export function loadNumProgress(): NumProgress {
+  try {
+    const s = JSON.parse(localStorage.getItem(NUM_KEY) || "null");
+    if (s && typeof s === "object" && s.done) return { done: s.done || {}, last3: s.last3 || {} };
+  } catch {}
+  return emptyNumProgress();
+}
+
+export function saveNumProgress(p: NumProgress) {
+  try {
+    localStorage.setItem(NUM_KEY, JSON.stringify(p));
+  } catch {}
+}
+
 /** Mini-game 3 dipilih acak, tetapi tidak sama dengan yang terakhir dimainkan untuk huruf itu. */
 export function pickMini3(last: Mini3 | undefined): Mini3 {
   if (last === "count") return "shadow";

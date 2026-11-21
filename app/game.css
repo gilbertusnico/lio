@@ -96,7 +96,7 @@ button.step:disabled { cursor: default; }
    sisa tinggi layar. (Dulu tinggi Lio pakai vh, yang di Chrome Android menghitung layar TANPA bilah
    alamat, sehingga tombol Mulai Main terpotong.) */
 #start { padding-bottom: max(22px, env(safe-area-inset-bottom)); }
-#start h1, #start .sub, #btnStart { flex: none; }
+#start h1, #btnStart { flex: none; }
 #start .cover-stage { flex: 0 1 470px; min-height: 0; margin: 8px 0 20px; }
 #start .cover-stage .lio.start { height: 100%; max-height: 100%; }
 @media (min-width: 600px) and (min-height: 800px) { #start .cover-stage { flex-basis: 560px; } }
@@ -268,7 +268,6 @@ button.step { display: flex; align-items: center; justify-content: center; }
 /* ===== Butir 9, 10, 12 (15 Nov) ===== */
 /* Ikon Noto yang dibundel */
 .emo { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.22em; object-fit: contain; pointer-events: none; }
-.emo.flip { transform: scaleX(-1); }
 .icon-btn .emo { width: 30px; height: 30px; vertical-align: middle; }
 button.step .emo { width: 28px; height: 28px; }
 .emo.step-shadow { filter: brightness(0); opacity: .7; }
@@ -287,8 +286,8 @@ button.step .emo { width: 28px; height: 28px; }
 .pokeable.poke-spin { rotate: 360deg; scale: 1.25; }
 .leaves { pointer-events: none; }
 /* Layar tidak menutupi daun sudut: hanya isi layar yang menangkap sentuhan */
-#map.screen, #play.screen { pointer-events: none; }
-#map.screen > *, #play.screen > * { pointer-events: auto; }
+#map.screen, #menu.screen, #numap.screen, #play.screen { pointer-events: none; }
+#map.screen > *, #menu.screen > *, #numap.screen > *, #play.screen > * { pointer-events: auto; }
 .sky-cloud.pokeable { z-index: 1; }
 .butterfly { pointer-events: none; } .butterfly .pokeable { pointer-events: auto; }
 .lio-tap { display: block; flex: none; }
@@ -352,3 +351,42 @@ html, body { overscroll-behavior: none; position: fixed; inset: 0; width: 100%; 
 #start > .start-wrap.start-wrap { position: relative; z-index: 3 !important; }
 /* Semak hijau tua di belakang Lio: tinggi ikut lebar layar supaya di tablet tidak terpotong datar. */
 #start > .cover-floor::after { height: auto; aspect-ratio: 400 / 150; }
+
+/* ===== Petualangan Angka, tahap 1 (21 Nov): Pilih Pelajaran + Pilih Angka ===== */
+#menu h2, #numap h2 { margin: 6px 0 2px; font-size: clamp(26px, 7.2vw, 34px); color: var(--ink); white-space: nowrap; }
+#numap .legend { font-size: 15px; font-weight: 600; opacity: .8; margin-bottom: 8px; text-align: center; color: var(--ink-soft); }
+#menu, #numap { overflow: hidden; }
+@media (min-height: 720px) { #menu, #numap { padding-bottom: 70px; } }
+@media (max-height: 600px) { #numap h2, #menu h2 { font-size: 28px; margin: 2px 0 0; } #numap .legend { display: none; } }
+
+.menu-cards { flex: 1 1 0; min-height: 0; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 18px;
+  justify-content: center; padding: 10px 6px 4px; }
+.menu-wrap { flex: 1 1 0; min-height: 0; max-height: 320px; display: flex; }
+.lesson-card { position: relative; flex: 1; min-height: 0; width: 100%; border: 0; border-radius: 32px; color: #fff; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-evenly; padding: 10px 12px 12px;
+  font-family: var(--font-letter); transition: transform .08s, box-shadow .08s; }
+.lesson-card:active { transform: translateY(5px); }
+.lesson-card.letters { background: linear-gradient(180deg, #ffb35e, #ff7417); box-shadow: 0 8px 0 #d4560a; }
+.lesson-card.letters:active { box-shadow: 0 3px 0 #d4560a; }
+.lesson-card.numbers { background: linear-gradient(180deg, #55dcf2, #14a6cc); box-shadow: 0 8px 0 #0b83a2; }
+.lesson-card.numbers:active { box-shadow: 0 3px 0 #0b83a2; }
+.lc-sample { font-weight: 700; font-size: clamp(48px, min(16vw, 9vh), 84px); line-height: 1; letter-spacing: 2px; text-shadow: 0 4px 0 rgba(0,0,0,.14); }
+.lc-pics { display: flex; gap: 10px; height: clamp(44px, min(13vw, 8vh), 72px); }
+.lc-pics img { height: 100%; width: auto; aspect-ratio: 1; filter: drop-shadow(0 3px 2px rgba(0,0,0,.2)); }
+.lc-name { font: 800 clamp(20px, 6vw, 28px) var(--font-ui); background: rgba(255,255,255,.28); padding: 2px 22px; border-radius: 999px; }
+.lc-stars { position: absolute; top: 10px; right: 12px; display: flex; align-items: center; gap: 4px; background: #fff; color: var(--ink);
+  font: 800 15px var(--font-ui); padding: 3px 10px 3px 6px; border-radius: 999px; box-shadow: 0 3px 0 rgba(0,0,0,.14); }
+.lc-stars .emo { width: 18px; height: 18px; }
+
+.numgrid-fit { flex: 1 1 0; min-height: 0; width: 100%; display: flex; justify-content: center; align-items: flex-start;
+  container-type: size; padding: 8px 10px; }
+.numgrid { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(5, 1fr); gap: min(12px, 2.4cqh);
+  width: min(100cqw, 440px); height: 100cqh; }
+.numtile-wrap { display: flex; min-height: 0; min-width: 0; }
+.numtile { flex: 1; width: 100%; border: 0; border-radius: 22px; position: relative; display: flex; align-items: center;
+  justify-content: space-evenly; color: #fff; cursor: pointer; font-family: var(--font-letter);
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--c) 68%, #000); transition: transform .08s; }
+.numtile:active { transform: translateY(4px); }
+.nt-num { font-weight: 700; font-size: min(13cqw, 11cqh); line-height: 1; text-shadow: 0 3px 0 rgba(0,0,0,.16); }
+.nt-fruit { height: 64%; width: auto; aspect-ratio: 1; filter: drop-shadow(0 3px 2px rgba(0,0,0,.22)); }
+.numtile .badge { position: absolute; top: -9px; right: -7px; width: 28px; height: 28px; }

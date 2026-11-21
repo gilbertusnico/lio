@@ -2,11 +2,13 @@
  * Lembar kontak semua huruf (kapital + kecil) untuk dicek dengan mata:
  * bentuk, urutan goresan (angka), titik mulai (bulatan), dan arah (panah).
  * Jalankan: npm run sheet  → docs/lembar-huruf.png
+ * Angka 1–10:  npm run sheet -- angka  → docs/lembar-angka.png
  */
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
 import { ALPHABET, GLYPHS, LINE, type Glyph } from "@/data/glyphs";
+import { NUM_GLYPHS } from "@/data/numberGlyphs";
 
 const COLORS = ["#e8452c", "#2f6fe0", "#1f9d55", "#a04be0"];
 
@@ -39,13 +41,18 @@ function cell(g: Glyph): string {
   return s + `</svg>`;
 }
 
+const NUMS = process.argv.includes("angka");
+const cells = NUMS
+  ? Object.keys(NUM_GLYPHS).map((n) => cell(NUM_GLYPHS[Number(n)]))
+  : ALPHABET.map((ch) => cell(GLYPHS[ch].upper) + cell(GLYPHS[ch].lower));
+
 const html = `<html><body style="margin:12px;font-family:sans-serif;background:#fff">
 <div style="display:grid;grid-template-columns:repeat(8,150px);gap:6px">
-${ALPHABET.map((ch) => cell(GLYPHS[ch].upper) + cell(GLYPHS[ch].lower)).join("\n")}
+${cells.join("\n")}
 </div></body></html>`;
 
 async function main() {
-  const out = path.resolve("docs/lembar-huruf.png");
+  const out = path.resolve(NUMS ? "docs/lembar-angka.png" : "docs/lembar-huruf.png");
   const tmp = path.resolve(".sheet.html");
   fs.writeFileSync(tmp, html);
   const b = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined });

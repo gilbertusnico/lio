@@ -26,7 +26,7 @@ export function ell(cx: number, cy: number, rx: number, ry: number, a0: number, 
   }
   return out;
 }
-const arc = (cx: number, cy: number, r: number, a0: number, a1: number) => ell(cx, cy, r, r, a0, a1);
+export const arc = (cx: number, cy: number, r: number, a0: number, a1: number) => ell(cx, cy, r, r, a0, a1);
 
 /** Memadatkan polyline menjadi titik setiap ±STEP unit. */
 export function densify(poly: Pt[]): Pt[] {
@@ -42,7 +42,7 @@ export function densify(poly: Pt[]): Pt[] {
   return out;
 }
 
-type Raw = Pt[][];
+export type Raw = Pt[][];
 const T = LINE.top, M = LINE.mid, B = LINE.base, D = LINE.desc;
 
 /* ---------- Huruf kapital ---------- */
@@ -120,7 +120,7 @@ export type Glyph = {
   box: { x0: number; x1: number; y0: number; y1: number };
 };
 
-function build(ch: string, raw: Raw): Glyph {
+export function build(ch: string, raw: Raw): Glyph {
   const strokes = raw.map((s) => (s.length === 1 ? [s[0]] : densify(s)));
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (const s of strokes)

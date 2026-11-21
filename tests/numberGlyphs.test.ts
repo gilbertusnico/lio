@@ -58,8 +58,29 @@ test("jumlah goresan sesuai cara menulis (4 dan 5 dua goresan, 10 dua goresan, s
   for (const n of nums) assert.equal(NUM_GLYPHS[n].strokes.length, want[n], `angka ${n}`);
 });
 
-test("goresan pertama tiap angka dimulai dari bagian atas", () => {
-  for (const g of glyphs) assert.ok(g.strokes[0][0][1] <= 26, `${g.ch}: mulai di y=${g.strokes[0][0][1]}`);
+test("goresan pertama tiap angka dimulai dari bagian atas (8 dari titik tengah)", () => {
+  for (const g of glyphs) {
+    if (g.ch === "8") {
+      assert.ok(dist(g.strokes[0][0], [50, 44]) < 1, "8 harus dimulai dari titik tengah");
+      continue;
+    }
+    assert.ok(g.strokes[0][0][1] <= 26, `${g.ch}: mulai di y=${g.strokes[0][0][1]}`);
+  }
+});
+
+test("angka 8 bergerak kiri bawah → kanan bawah → kiri atas, lalu kembali ke tengah", () => {
+  const s = NUM_GLYPHS[8].strokes[0];
+  const n = s.length;
+  const at = (f: number) => s[Math.floor((n - 1) * f)];
+  assert.ok(at(0.08)[0] < 50 && at(0.08)[1] > 44, "awalnya harus ke kiri bawah");
+  const bottom = s.reduce((m, p) => (p[1] > m[1] ? p : m));
+  assert.ok(bottom[1] > 76, "harus memutari lingkaran bawah");
+  const iBottom = s.indexOf(bottom);
+  assert.ok(s.slice(iBottom).some((p) => p[0] > 62 && p[1] > 50), "setelah dasar harus ke kanan bawah");
+  const mid = s.findIndex((p, i) => i > 20 && i < n - 20 && dist(p, [50, 44]) < 3);
+  assert.ok(mid > iBottom, "menyilang lewat tengah setelah lingkaran bawah");
+  assert.ok(s.slice(mid).some((p) => p[0] < 38 && p[1] < 30), "setelah menyilang harus ke kiri atas");
+  assert.ok(dist(s[n - 1], [50, 44]) < 1, "berakhir di tengah");
 });
 
 test("setiap angka selesai kalau ditelusuri dengan rapi", () => {
@@ -94,9 +115,10 @@ test("angka 8 (menyilang dirinya sendiri) selesai walau jari lambat dan rapat di
   const r = follow(s, path);
   assert.ok(r.done && r.offs === 0, "8 gagal selesai pada kecepatan lambat");
   // Titik persilangan memang dilewati dua kali: pastikan jari yang baru menyentuh persilangan belum menyelesaikan apa pun.
-  const cross = s.findIndex((p) => dist(p, [44, 40]) < 6);
-  assert.ok(cross > 0 && cross < s.length / 2, "persilangan pertama harus di paruh pertama goresan");
-  assert.ok(!follow(s, s.slice(0, cross + 4)).done);
+  const cross = s.findIndex((p, i) => i > 20 && i < s.length - 20 && dist(p, [50, 44]) < 2);
+  assert.ok(cross > 0, "harus ada persilangan di tengah goresan");
+  assert.ok(!follow(s, s.slice(0, cross + 4)).done, "8 belum boleh selesai di persilangan");
+  assert.ok(!follow(s, [s[0], ...s.slice(cross, cross + 10)]).done, "tidak boleh loncat dari awal ke persilangan");
 });
 
 test("coretan asal tidak menyelesaikan angka", () => {

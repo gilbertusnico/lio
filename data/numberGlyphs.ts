@@ -3,7 +3,7 @@
  * tinggi angka dari garis atas ke garis dasar). Urutan dan arah goresan mengikuti cara menulis angka di SD:
  *   1: topi kecil lalu turun · 2: lengkung atas lalu miring ke dasar lalu ke kanan · 3: dua lengkung
  *   4: miring + datar, lalu garis tegak · 5: tegak + perut, lalu topi · 6: turun melengkung lalu lingkaran
- *   7: datar lalu miring · 8: satu goresan menyilang di tengah · 9: lingkaran lalu tegak · 10: "1" lalu "0"
+ *   7: datar lalu miring · 8: mulai dari tengah, kiri bawah, kanan bawah, kiri atas, kembali ke tengah · 9: lingkaran lalu tegak · 10: "1" lalu "0"
  * Titik putar balik dan sudut tajam harus benar-benar dicapai jari (lihat corners() di lib/trace.ts).
  */
 import { LINE, build, ell, type Glyph, type Raw } from "./glyphs";
@@ -18,11 +18,13 @@ const DIGITS: Record<number, Raw> = {
   5: [[[34, T], [34, 43], ...ell(48, 60, 22, 20, -125, 140)], [[34, T], [68, T]]],
   6: [[[64, T], [46, 22], [33, 46], ...ell(50, 60, 19, 20, 180, -180)]],
   7: [[[28, T], [72, T], [42, B]]],
+  // 8: mulai dari titik tengah, turun ke kiri bawah, memutari lingkaran bawah ke kanan bawah,
+  // naik menyilang lewat tengah ke kiri atas, memutari lingkaran atas, dan kembali ke tengah.
   8: [[
-    ...ell(50, 26, 17, 18, -45, -225),
-    ...ell(50, 62, 20, 18, -45, 225),
-    [52, 37], [67, 26],
-    ...ell(50, 26, 17, 18, 0, -45),
+    [50, 44], [36, 49],
+    ...ell(50, 62, 20, 18, 225, -45),
+    [38.7, 38.7],
+    ...ell(50, 26, 17, 18, 135, 450),
   ]],
   9: [[...ell(49, 28, 19, 20, -30, -360), [68, 18], [68, 56], [60, 74], [44, B]]],
   10: [

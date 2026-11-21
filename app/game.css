@@ -464,3 +464,28 @@ html, body { overscroll-behavior: none; position: fixed; inset: 0; width: 100%; 
 /* Pilih Angka: tombol album seperti di Pilih Huruf */
 #numap .map-album { margin-bottom: 8px; }
 @media (max-height: 600px) { #numap .map-album { margin-bottom: 4px; } }
+
+/* Buah angka tergantung di ranting di atas papan tebalkan, jatuh saat angka selesai */
+.fruit-hang { position: absolute; top: -54px; right: 1%; width: 140px; height: 51px; z-index: 2; pointer-events: none; }
+.fh-branch { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fh-swing { position: absolute; top: 19px; left: 70px; width: 62px; transform-origin: 50% 0; animation: fhSwing 2.4s ease-in-out infinite alternate; }
+.fh-stem { display: block; width: 3px; height: 12px; margin: 0 auto; background: #5b8f2e; border-radius: 2px; }
+.fh-react { transform-origin: 50% 0; }
+.fh-fruit { display: block; width: 62px; height: 62px; object-fit: contain; pointer-events: auto; cursor: pointer; margin-top: -4px; }
+.fh-react.kick { animation: fhKick 1.1s ease-out; }
+.fh-react.shake { animation: critShake .5s; }
+@keyframes fhSwing { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+@keyframes fhKick { 0% { transform: rotate(0); } 18% { transform: rotate(24deg); } 40% { transform: rotate(-16deg); } 62% { transform: rotate(9deg); } 82% { transform: rotate(-4deg); } 100% { transform: rotate(0); } }
+/* Jatuh: tangkai tertinggal di ranting, buah jatuh ke pojok bawah papan lalu memantul */
+.fruit-hang.dropped .fh-swing { animation: none; }
+.fruit-hang.dropped .fh-drop { animation: fhDrop 1.1s forwards; }
+.fruit-hang.dropped .fh-fruit { pointer-events: none; }
+@keyframes fhDrop {
+  0% { transform: translateY(0) rotate(0); animation-timing-function: cubic-bezier(.5,0,1,.6); }
+  40% { transform: translateY(calc(var(--s) - 34px)) rotate(14deg); animation-timing-function: cubic-bezier(0,.4,.5,1); }
+  58% { transform: translateY(calc(var(--s) - 80px)) rotate(4deg); animation-timing-function: cubic-bezier(.5,0,1,.6); }
+  74% { transform: translateY(calc(var(--s) - 34px)) rotate(-6deg); animation-timing-function: cubic-bezier(0,.4,.5,1); }
+  86% { transform: translateY(calc(var(--s) - 52px)) rotate(-2deg); animation-timing-function: cubic-bezier(.5,0,1,.6); }
+  100% { transform: translateY(calc(var(--s) - 34px)) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) { .fh-swing, .fh-react, .fruit-hang.dropped .fh-drop { animation: none !important; } }

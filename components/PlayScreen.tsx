@@ -14,6 +14,7 @@ import MatchCountGame from "./MatchCountGame";
 import BasketGame from "./BasketGame";
 import FindNumberGame from "./FindNumberGame";
 import Critter from "./Critter";
+import FruitHang from "./FruitHang";
 import { motion } from "motion/react";
 import Pop from "./Pop";
 import Icon from "./Icon";
@@ -113,7 +114,8 @@ export default function PlayScreen(p: Props) {
 
   const common = { onDone: p.onGameDone, onSay: p.onSay, onPose: p.onPose, ask };
   // Hewan/buah yang jalan di atas papan. Tidak tampil saat ada yang harus dihitung atau ditebak.
-  const critter = L ? (game < 2 ? { img: L.img, motion: L.motion } : null) : game === 0 ? { img: N!.img, motion: "float" as const } : null;
+  // Hewan huruf jalan-jalan; buah angka tergantung di ranting (lihat FruitHang).
+  const critter = L && game < 2 ? { img: L.img, motion: L.motion } : null;
   const glyph = L ? GLYPHS[L.ch] : { upper: NUM_GLYPHS[N!.n], lower: undefined };
 
   return (
@@ -149,6 +151,7 @@ export default function PlayScreen(p: Props) {
       >
         {/* Hewan tidak tampil di mini-game 3 (buah angka: hanya saat menebalkan) supaya tidak ikut terhitung / membocorkan jawaban */}
         {critter && <Critter key={`c${p.round}`} img={critter.img} motion={critter.motion} pose={p.pose.name} n={p.pose.n} />}
+        {N && game === 0 && <FruitHang key={`f${p.round}`} img={N.img} pose={p.pose.name} n={p.pose.n} dropped={p.flash > 0} />}
         {game === 0 ? (
           <Pop key={`t${p.round}-${tr.n}`} from={0.85}>
           <TraceBoard

@@ -128,6 +128,22 @@ async function playRound(page: Page, n: number, shot: (s: string) => Promise<voi
   if (!t.includes(`Angka ${n} selesai`) && !t.includes("Semua angka")) throw new Error(`${n}: teks menang "${t}"`);
   if (first !== !!(await page.locator(".new-sticker").count())) throw new Error(`${n}: "Stiker baru!" ${first ? "tidak muncul" : "muncul lagi"}`);
   if (first && !(await page.locator(`.new-sticker img[alt="${lv.fruit}"]`).count())) throw new Error(`${n}: stiker bukan ${lv.fruit}`);
+  if (first) {
+    // Stiker buah terbang ke ikon album, lalu album terbuka di tab Angka dengan stiker itu
+    await page.locator("#winAlbum.bump").waitFor({ timeout: 5000 });
+    await shot(`${n}-5-stiker-masuk`);
+    await page.locator("#winAlbum").click({ force: true });
+    await page.locator("#album").waitFor();
+    if (!(await page.locator("#albumTab-angka.on").count())) throw new Error(`${n}: album tidak terbuka di tab Angka`);
+    if ((await page.locator("#album .sticker").count()) !== 10) throw new Error(`${n}: tab Angka bukan 10 kotak`);
+    if (!(await page.locator(`#album .sticker.has[aria-label^="Stiker ${lv.fruit}"]`).count())) throw new Error(`${n}: stiker buah tidak masuk album`);
+    await page.waitForTimeout(600);
+    await shot(`${n}-6-album`);
+    await page.locator("#albumTab-huruf").click({ force: true });
+    if ((await page.locator("#album .sticker").count()) !== 26) throw new Error(`${n}: tab Huruf bukan 26 kotak`);
+    await page.locator("#album .icon-btn").click({ force: true });
+    await page.locator("#album").waitFor({ state: "detached" });
+  }
   const saved = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) || "{}"), KEY);
   if (!saved.done?.[n]) throw new Error(`${n}: progres tidak tersimpan`);
   if (saved.last3?.[n] !== kind) throw new Error(`${n}: jenis mini-game 3 tidak tercatat`);
@@ -183,6 +199,37 @@ async function main() {
     if (!(await page.locator(".numtile").nth(n - 1).locator(".badge").count())) throw new Error(`${n}: bintang tidak muncul`);
     console.log(`✓ ${n}: ${kinds.join(", ")}`);
   }
+  // Album dari Pilih Angka: tab Angka, jumlah bintang sesuai, back HP menutup album
+  await page.locator("#btnNumAlbum").click({ force: true });
+  await page.locator("#albumTab-angka.on").waitFor();
+  const got = (await page.locator("#album .album-count").textContent()) || "";
+  if (got !== `${new Set(nums).size}/10`) throw new Error(`album angka menghitung ${got}`);
+  await page.goBack();
+  await page.locator("#album").waitFor({ state: "detached" });
+  await page.locator("#numap").waitFor();
+
+  // Semua angka selesai: angka terakhir diselesaikan → "Semua angka selesai!", Lanjut membuka album tab Angka 10/10
+  await page.evaluate((k) => {
+    const done: Record<string, boolean> = {};
+    for (let i = 1; i <= 9; i++) done[i] = true;
+    localStorage.setItem(k, JSON.stringify({ done, last3: {} }));
+  }, KEY);
+  await page.reload();
+  await page.locator("#btnStart").click({ force: true });
+  await page.locator(".lesson-card.numbers").click({ force: true });
+  await page.locator(".numtile").nth(9).click({ force: true });
+  await page.locator("#introGo").click({ force: true });
+  await playRound(page, 10, (s) => shot(`akhir-${s}`), true);
+  if (!((await page.locator("#winText").textContent()) || "").includes("Semua angka selesai")) throw new Error("teks semua angka selesai tidak muncul");
+  if (!(await page.locator("#win .stars img[src*=trophy]").count())) throw new Error("piala tidak muncul");
+  await page.locator("#winNext").click({ force: true });
+  await page.locator("#albumTab-angka.on").waitFor();
+  if ((await page.locator("#album .album-count").textContent()) !== "10/10") throw new Error("album akhir bukan 10/10");
+  await shot("akhir-album");
+  await page.locator("#album .icon-btn").click({ force: true });
+  await page.locator("#album").waitFor({ state: "detached" });
+  await page.locator("#numap").waitFor();
+
   // Tombol back HP saat main angka: tanya dulu, Keluar = kembali ke Pilih Angka
   await page.locator(".numtile").first().click({ force: true });
   await page.locator("#introGo").click({ force: true });

@@ -18,7 +18,7 @@ import PlayScreen, { type Level } from "./PlayScreen";
 import Leaves from "./Leaves";
 import Fx, { type FxHandle } from "./Fx";
 import Paywall from "./Paywall";
-import Album from "./Album";
+import Album, { type AlbumTab } from "./Album";
 import Icon from "./Icon";
 import Emo from "./Emo";
 import Pop from "./Pop";
@@ -44,7 +44,7 @@ export default function Game() {
   const [intro, setIntro] = useState(false);
   const [win, setWin] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [album, setAlbum] = useState(false);
+  const [album, setAlbum] = useState<AlbumTab | null>(null);
   const [resetAsk, setResetAsk] = useState(false);
   const [newSticker, setNewSticker] = useState(false);
   const [fly, setFly] = useState<{ from: DOMRect; to: DOMRect } | null>(null);
@@ -84,14 +84,14 @@ export default function Game() {
 
   // Stiker baru: muncul di samping Lio, lalu terbang ke ikon album di pojok kanan atas.
   useEffect(() => {
-    if (!win || !newSticker || isNum) return; // album angka belum ada (tahap 4): stiker buah tidak terbang
+    if (!win || !newSticker) return;
     const t = setTimeout(() => {
       const a = stickerImg.current?.getBoundingClientRect();
       const b = albumBtn.current?.getBoundingClientRect();
       if (a && b) { setFly({ from: a, to: b }); sfx.whoosh(); }
     }, 1700);
     return () => clearTimeout(t);
-  }, [win, newSticker, isNum]);
+  }, [win, newSticker]);
   useEffect(() => { leavingRef.current = leaving; });
 
   // ---- Anti kepencet (butir 10) ----
@@ -100,7 +100,7 @@ export default function Game() {
   useEffect(() => {
     backRef.current = () => {
       if (resetAsk) { setResetAsk(false); return true; }
-      if (album) { setAlbum(false); return true; }
+      if (album) { setAlbum(null); return true; }
       if (pay) { setPay(null); return true; }
       if (leaving) { setLeaving(false); const fn = pending.current; pending.current = null; fn?.(); return true; }
       if (win) { goMap(); return true; }
@@ -266,12 +266,12 @@ export default function Game() {
         )}
         {screen === "nummap" && (
           <motion.div key="nummap" {...fade}>
-            <NumberMap progress={numProgress} onPick={startNumber} />
+            <NumberMap progress={numProgress} onPick={startNumber} onAlbum={() => { audio(); setAlbum("angka"); }} />
           </motion.div>
         )}
         {screen === "map" && (
           <motion.div key="map" {...fade}>
-            <LetterMap progress={progress} onPick={startLetter} onAlbum={() => { audio(); setAlbum(true); }} />
+            <LetterMap progress={progress} onPick={startLetter} onAlbum={() => { audio(); setAlbum("huruf"); }} />
           </motion.div>
         )}
         {screen === "play" && (
@@ -355,14 +355,12 @@ export default function Game() {
                 onAnimationComplete={() => { setFly(null); setLanded(true); sfx.pop(); }}
               />
             )}
-            {!isNum && (
-              <button
-                ref={albumBtn} className={`album-chip win-album${landed ? " bump" : ""}`} id="winAlbum"
-                onClick={() => { audio(); setAlbum(true); }} aria-label="Buka album stiker"
-              >
-                <img src="/ui/album.webp" alt="" draggable={false} /> <b>{stickerCount - (newSticker && !landed ? 1 : 0)}</b>
-              </button>
-            )}
+            <button
+              ref={albumBtn} className={`album-chip win-album${landed ? " bump" : ""}`} id="winAlbum"
+              onClick={() => { audio(); setAlbum(lesson); }} aria-label="Buka album stiker"
+            >
+              <img src="/ui/album.webp" alt="" draggable={false} /> <b>{(isNum ? numCount : stickerCount) - (newSticker && !landed ? 1 : 0)}</b>
+            </button>
             <button className={`btn ghost icon-btn music-btn win-music${musicOn ? "" : " off"}`} aria-label="Musik" onClick={toggleMusic}>
               <Emo name={musicOn ? "music" : "mute"} />
             </button>
@@ -399,13 +397,13 @@ export default function Game() {
                   className="btn green" id="winNext"
                   onClick={() => {
                     if (isNum) {
-                      // Album angka menyusul di tahap 4; untuk sekarang semua angka selesai = kembali ke Pilih Angka.
-                      if (!allDone && cur < NUMBERS.length - 1) startNumber(cur + 1);
+                      if (allDone) { goMap(); setAlbum("angka"); } // semua stiker buah terkumpul: tunjukkan albumnya
+                      else if (cur < NUMBERS.length - 1) startNumber(cur + 1);
                       else goMap();
                       return;
                     }
                     if (PAYWALL_ENABLED && cur + 1 >= FREE_LETTERS) { setWin(false); setScreen("map"); setPay("win"); }
-                    else if (allDone) { goMap(); setAlbum(true); } // semua stiker terkumpul: tunjukkan albumnya
+                    else if (allDone) { goMap(); setAlbum("huruf"); } // semua stiker terkumpul: tunjukkan albumnya
                     else if (cur < LETTERS.length - 1) startLetter(cur + 1);
                     else goMap();
                   }}
@@ -420,7 +418,9 @@ export default function Game() {
 
       <AnimatePresence>{pay && <Paywall key="pay" fromWin={pay === "win"} onClose={() => setPay(null)} />}</AnimatePresence>
 
-      <AnimatePresence>{album && <Album key="album" progress={progress} onClose={() => setAlbum(false)} />}</AnimatePresence>
+      <AnimatePresence>
+        {album && <Album key="album" progress={progress} numProgress={numProgress} tab={album} onClose={() => setAlbum(null)} />}
+      </AnimatePresence>
 
       {(screen === "menu" || screen === "map" || screen === "nummap") && !intro && (
         <button

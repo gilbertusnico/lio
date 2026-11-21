@@ -9,11 +9,17 @@ import Pop from "./Pop";
 /**
  * Layar Pilih Angka: 1–10 terbuka semua, bebas pilih. Angka yang selesai dapat bintang.
  */
-export default function NumberMap({ progress, onPick }: { progress: NumProgress; onPick: (i: number) => void }) {
+export default function NumberMap({ progress, onPick, onAlbum }: { progress: NumProgress; onPick: (i: number) => void; onAlbum: () => void }) {
+  const stars = NUMBERS.filter((l) => progress.done[l.n]).length;
   return (
     <section id="numap" className="screen on">
       <Pop><h2><span className="sparkle">Pilih Angka</span></h2></Pop>
       <div className="legend">Pilih angka mana saja ya!</div>
+      <Pop delay={0.06}>
+        <button className="btn ghost map-album" id="btnNumAlbum" onClick={onAlbum} aria-label="Buka album stiker">
+          <img src="/ui/album.webp" alt="" draggable={false} /> Album Stiker <b>{stars}/10</b>
+        </button>
+      </Pop>
       <div className="numgrid-fit">
         <div className="numgrid">
           {NUMBERS.map((l, i) => (

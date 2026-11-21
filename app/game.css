@@ -449,3 +449,18 @@ html, body { overscroll-behavior: none; position: fixed; inset: 0; width: 100%; 
 .basket-n { position: absolute; right: 8%; top: 12%; min-width: calc(var(--s) * .13); height: calc(var(--s) * .13); border-radius: 999px; color: #fff;
   font: 800 calc(var(--s) * .085) / calc(var(--s) * .13) var(--font-letter); text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,.15); z-index: 4;
   animation: foundPop .35s cubic-bezier(.2,1.6,.4,1); }
+
+/* Album: tab Huruf | Angka */
+.album-tabs { flex: none; display: flex; gap: 8px; margin-top: 10px; padding: 4px; background: rgba(255,255,255,.7); border-radius: 999px;
+  box-shadow: 0 3px 0 #cfd8e3; }
+.album-tab { border: 0; background: none; border-radius: 999px; padding: 8px 18px; font: 800 18px var(--font-ui); color: var(--ink-soft, var(--ink));
+  cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.album-tab .at-sample { font-family: var(--font-letter); font-weight: 700; }
+.album-tab.on { background: var(--ink); color: #fff; }
+/* Tab angka: 10 stiker buah, 5 per baris di semua layar (2 baris rapi), sedikit lebih besar */
+.album-grid.nums { grid-template-columns: repeat(5, 1fr); max-width: 520px; align-content: start; }
+@media (min-width: 600px) { .album-grid.nums { grid-template-columns: repeat(5, 1fr); max-width: 620px; } }
+.album-grid.nums .sticker .ch { font-family: var(--font-letter); }
+/* Pilih Angka: tombol album seperti di Pilih Huruf */
+#numap .map-album { margin-bottom: 8px; }
+@media (max-height: 600px) { #numap .map-album { margin-bottom: 4px; } }

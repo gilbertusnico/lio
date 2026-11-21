@@ -1,22 +1,31 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { NUM, type Letter } from "@/data/letters";
+import { NUM } from "@/data/letters";
 import { audio, sfx } from "@/lib/audio";
 import { shuffle } from "@/lib/progress";
 import Pop from "./Pop";
 import Hand, { centerOf, type HandDemo, type HandPoint } from "./Hand";
 import type { PoseName } from "./Lio";
 
-/** Mini-game 3a: hitung hewan (3–6). Ketuk satu-satu untuk menghitung, lalu pilih angkanya. */
-type Props = { letter: Letter; onDone: () => void; onSay: (t: string) => void; onPose: (p: PoseName) => void; ask?: number };
+/**
+ * Hitung benda: ketuk satu-satu untuk menghitung, lalu pilih angkanya.
+ * Huruf: hewan huruf itu, jumlah acak 3–6. Angka: buah level itu, jumlahnya = angka levelnya (`n`).
+ */
+type Props = {
+  img: string;
+  /** Nama benda yang dihitung, huruf kecil (mis. "ayam", "anggur"). */
+  word: string;
+  /** Jumlah benda. Kosong = acak 3–6. */
+  n?: number;
+  onDone: () => void; onSay: (t: string) => void; onPose: (p: PoseName) => void; ask?: number;
+};
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
-export default function CountGame({ letter, onDone, onSay, onPose, ask = 0 }: Props) {
-  const word = letter.word === "Lio" ? "Lio" : letter.word.toLowerCase();
-  const [n] = useState(() => 3 + Math.floor(Math.random() * 4));
-  // Dua pengecoh diambil acak dari n-2…n+2, supaya jawaban benar tidak selalu angka yang di tengah.
-  const [opts] = useState(() => shuffle([n, ...shuffle([n - 2, n - 1, n + 1, n + 2].filter((v) => v >= 1)).slice(0, 2)]));
+export default function CountGame({ img, word, n: fixed, onDone, onSay, onPose, ask = 0 }: Props) {
+  const [n] = useState(() => fixed ?? 3 + Math.floor(Math.random() * 4));
+  // Dua pengecoh diambil acak dari n-2…n+2 (1–10), supaya jawaban benar tidak selalu angka yang di tengah.
+  const [opts] = useState(() => shuffle([n, ...shuffle([n - 2, n - 1, n + 1, n + 2].filter((v) => v >= 1 && v <= 10)).slice(0, 2)]));
   const [order, setOrder] = useState<number[]>([]); // indeks hewan sesuai urutan diketuk
   const [wrong, setWrong] = useState<{ v: number; n: number }[]>([]);
   const [done, setDone] = useState(false);
@@ -58,7 +67,7 @@ export default function CountGame({ letter, onDone, onSay, onPose, ask = 0 }: Pr
 
   return (
     <>
-      <div className="qitems">
+      <div className={`qitems${n > 6 ? " many" : ""}`}>
         {Array.from({ length: n }, (_, i) => {
           const k = order.indexOf(i);
           return (
@@ -67,7 +76,7 @@ export default function CountGame({ letter, onDone, onSay, onPose, ask = 0 }: Pr
               ref={(node) => { items.current[i] = node; }}
               className={`qitem${k >= 0 ? " counted" : ""}`} onClick={() => count(i)} aria-label={word}
             >
-              <img src={letter.img} alt="" draggable={false} />
+              <img src={img} alt="" draggable={false} />
               {k >= 0 && <span className="n">{k + 1}</span>}
             </button>
             </Pop>

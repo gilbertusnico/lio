@@ -25,9 +25,12 @@ export function saveProgress(p: Progress) {
 
 /**
  * Progres angka (Petualangan Angka) disimpan terpisah dari huruf, supaya progres huruf tidak terganggu.
- * done["1".."10"] = angka yang ketiga mini-gamenya selesai; last3 = jenis mini-game 3 terakhir (diisi nanti).
+ * done["1".."10"] = angka yang ketiga mini-gamenya selesai; last3 = jenis mini-game 3 terakhir:
+ * match = cocokkan jumlah, basket = ambilkan N, findnum = cari angka.
  */
-export type NumProgress = { done: Record<string, boolean>; last3: Record<string, string> };
+export type NumMini3 = "match" | "basket" | "findnum";
+export const NUM_MINI3: NumMini3[] = ["match", "basket", "findnum"];
+export type NumProgress = { done: Record<string, boolean>; last3: Record<string, NumMini3> };
 const NUM_KEY = "lio-progress-angka-v1";
 export const emptyNumProgress = (): NumProgress => ({ done: {}, last3: {} });
 
@@ -50,6 +53,12 @@ export function pickMini3(last: Mini3 | undefined): Mini3 {
   if (last === "count") return "shadow";
   if (last === "shadow") return "count";
   return Math.random() < 0.5 ? "count" : "shadow";
+}
+
+/** Mini-game 3 angka: acak dari tiga jenis, tidak sama dengan yang terakhir dimainkan untuk angka itu. */
+export function pickNumMini3(last: NumMini3 | undefined): NumMini3 {
+  const opts = NUM_MINI3.filter((m) => m !== last);
+  return opts[Math.floor(Math.random() * opts.length)];
 }
 
 export function shuffle<T>(a: T[]): T[] {

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { GLYPHS, LINE, type Glyph, type Pt } from "@/data/glyphs";
-import type { Letter } from "@/data/letters";
+import { LINE, type Glyph, type Pt } from "@/data/glyphs";
 import { advance, canStart, dist, isDot } from "@/lib/trace";
 import { audio, sfx } from "@/lib/audio";
 import { PADR, layout, type Pose } from "@/lib/traceLayout";
@@ -11,11 +10,16 @@ import type { PoseName } from "./Lio";
 
 /**
  * Mini-game 1: papan bergaris buku tulis SD.
- * Alur: tebalkan huruf KAPITAL → kapital mengecil ke kiri, muncul huruf KECIL untuk ditebalkan
- * → keduanya berjajar "A a".
+ * Huruf: tebalkan huruf KAPITAL → kapital mengecil ke kiri, muncul huruf KECIL untuk ditebalkan
+ * → keduanya berjajar "A a". Angka: hanya satu bentuk (tanpa `lower`), selesai setelah ditebalkan.
  */
 type Props = {
-  letter: Letter;
+  /** Bentuk yang ditebalkan: huruf kapital, atau angka. */
+  upper: Glyph;
+  /** Huruf kecil yang ditebalkan sesudah kapital. Kosong untuk angka. */
+  lower?: Glyph;
+  kind: "huruf" | "angka";
+  color: string;
   /** Sisi papan dalam px. */
   size: number;
   onDone: () => void;
@@ -45,7 +49,7 @@ const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
 const mix = (a: Pose, b: Pose, k: number): Pose => ({ s: lerp(a.s, b.s, k), ox: lerp(a.ox, b.ox, k), oy: lerp(a.oy, b.oy, k) });
 const ease = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 
-export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops, onStrokes, startLower = false, onLower, ask = 0 }: Props) {
+export default function TraceBoard({ upper, lower, kind, color: inkColor, size, onDone, onSay, onPose, onOops, onStrokes, startLower = false, onLower, ask = 0 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   /** Titik contoh gerakan tangan untuk goresan yang sedang dikerjakan. */
   const handRef = useRef<() => HandDemo>(() => ({ pts: [] }));
@@ -58,28 +62,27 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
     sizeRef.current = size;
   });
 
-  const { upper, lower } = GLYPHS[letter.ch];
-  const lay = useMemo(() => layout(upper, lower), [upper, lower]);
+  const lay = useMemo(() => (lower ? layout(upper, lower) : null), [upper, lower]);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
-    const color = letter.color;
-    const st = { offs: 0, pointer: -1, phase: (startLower ? "lower" : "upper") as Phase, stroke: 0, prog: 0, drawing: false, lastOops: 0, t0: 0 };
+    const color = inkColor;
+    const st = { offs: 0, pointer: -1, phase: (startLower && lower ? "lower" : "upper") as Phase, stroke: 0, prog: 0, drawing: false, lastOops: 0, t0: 0 };
     const sparks: Spark[] = [];
     const timers: ReturnType<typeof setTimeout>[] = [];
     const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms));
     let raf = 0;
     let alive = true;
 
-    const active = () => (st.phase === "upper" ? upper : st.phase === "lower" ? lower : null);
-    const activePose = () => (st.phase === "lower" ? lay.lower : ID);
+    const active = () => (st.phase === "upper" ? upper : st.phase === "lower" ? lower ?? null : null);
+    const activePose = () => (st.phase === "lower" && lay ? lay.lower : ID);
     const report = () => {
-      const g = st.phase === "upper" || st.phase === "toLower" ? upper : lower;
+      const g = st.phase === "upper" || st.phase === "toLower" || !lower ? upper : lower;
       cb.current.onStrokes({ total: g.strokes.length, done: st.phase === "upper" || st.phase === "lower" ? st.stroke : g.strokes.length });
     };
 
-    cb.current.onSay(startLower ? `Ayo tebalkan ${lower.ch} kecil! Mulai dari titik nomor satu ya.` : `Ayo tebalkan huruf ${letter.ch}! Mulai dari titik nomor satu ya.`);
+    cb.current.onSay(st.phase === "lower" ? `Ayo tebalkan ${lower!.ch} kecil! Mulai dari titik nomor satu ya.` : `Ayo tebalkan ${kind} ${upper.ch}! Mulai dari titik nomor satu ya.`);
     report();
 
     /* ---------- koordinat ---------- */
@@ -141,9 +144,14 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       sfx.ding();
       cb.current.onPose("tepuk-tangan");
       st.t0 = performance.now();
-      if (st.phase === "upper") {
+      if (st.phase === "upper" && !lower) {
+        // Angka: tidak ada huruf kecil, langsung selesai (centang besar diurus induk).
+        st.phase = "both";
+        cb.current.onSay(`Hebat! Itu angka ${upper.ch}.`);
+        later(() => cb.current.onDone(), 700);
+      } else if (st.phase === "upper") {
         st.phase = "toLower";
-        cb.current.onSay(`Hebat! Itu ${letter.ch} besar. Sekarang ${lower.ch} kecil!`);
+        cb.current.onSay(`Hebat! Itu ${upper.ch} besar. Sekarang ${lower!.ch} kecil!`);
         later(() => {
           st.phase = "lower";
           cb.current.onLower?.();
@@ -155,7 +163,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
         }, T_LOWER);
       } else {
         st.phase = "toBoth";
-        cb.current.onSay(`${letter.ch} besar dan ${lower.ch} kecil. Keren!`);
+        cb.current.onSay(`${upper.ch} besar dan ${lower!.ch} kecil. Keren!`);
         later(() => { st.phase = "both"; }, T_BOTH);
         later(() => cb.current.onDone(), T_BOTH + T_HOLD);
       }
@@ -331,6 +339,12 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
 
       const k = ease(Math.min(1, (performance.now() - st.t0) / (st.phase === "toLower" ? T_LOWER : T_BOTH)));
       const ph = st.phase;
+      if (!lower || !lay) {
+        // Angka: satu bentuk saja, tetap di tempatnya.
+        lines(ID);
+        if (ph === "upper") tracing(upper, ID, "upper", t);
+        else full(upper, 0, upper.strokes.length, ID, WIDTH.upper[1], color);
+      } else {
       lines(ph === "upper" ? ID : ph === "toLower" ? mix(ID, lay.linesLower, k) : ph === "lower" ? lay.linesLower : ph === "toBoth" ? mix(lay.linesLower, lay.linesEnd, k) : lay.linesEnd);
 
       if (ph === "upper") tracing(upper, ID, "upper", t);
@@ -343,6 +357,7 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
           ctx.globalAlpha = 1;
         } else if (ph === "lower") tracing(lower, lay.lower, "lower", t);
         else full(lower, 0, lower.strokes.length, ph === "toBoth" ? mix(lay.lower, lay.lowerEnd, k) : lay.lowerEnd, WIDTH.lower[1], color);
+      }
       }
 
       for (let i = sparks.length - 1; i >= 0; i--) {
@@ -369,11 +384,11 @@ export default function TraceBoard({ letter, size, onDone, onSay, onPose, onOops
       canvas.removeEventListener("pointercancel", stop);
       canvas.removeEventListener("lostpointercapture", stop);
     };
-  }, [letter, upper, lower, lay, startLower]);
+  }, [inkColor, kind, upper, lower, lay, startLower]);
 
   return (
     <>
-      <canvas id="board" ref={canvasRef} style={{ width: size, height: size }} aria-label={`Papan menebalkan huruf ${letter.ch}`} />
+      <canvas id="board" ref={canvasRef} style={{ width: size, height: size }} aria-label={`Papan menebalkan ${kind} ${upper.ch}`} />
       <Hand demo={() => handRef.current()} restart={demoKey} delay={1100} now={hintNow + ask} />
     </>
   );

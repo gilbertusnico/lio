@@ -10,6 +10,7 @@ const MAP = {
   map: "world-map", home: "house", music: "musical-note", mute: "muted-speaker",
   pencil: "pencil", find: "magnifying-glass-tilted-left", count: "input-numbers",
   herb: "herb", lock: "locked", trophy: "trophy", phone: "mobile-phone",
+  basket: "basket", puzzle: "puzzle-piece",
 };
 fs.mkdirSync("public/ui", { recursive: true });
 for (const [name, icon] of Object.entries(MAP)) {

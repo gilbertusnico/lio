@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Letter } from "@/data/letters";
-import type { Mini3 } from "@/lib/progress";
+import type { NumberLevel } from "@/data/numbers";
+import { GLYPHS } from "@/data/glyphs";
+import { NUM_GLYPHS } from "@/data/numberGlyphs";
+import type { Mini3, NumMini3 } from "@/lib/progress";
 import TraceBoard from "./TraceBoard";
 import FindGame from "./FindGame";
 import CountGame from "./CountGame";
 import ShadowGame from "./ShadowGame";
+import MatchCountGame from "./MatchCountGame";
+import BasketGame from "./BasketGame";
+import FindNumberGame from "./FindNumberGame";
 import Critter from "./Critter";
 import { motion } from "motion/react";
 import Pop from "./Pop";
@@ -16,10 +22,13 @@ import { audio, sfx } from "@/lib/audio";
 import { poke } from "@/lib/poke";
 import { LioTalk, type PoseName } from "./Lio";
 
+/** Level yang dimainkan: satu huruf (Petualangan Huruf) atau satu angka (Petualangan Angka). */
+export type Level = { kind: "huruf"; letter: Letter } | { kind: "angka"; num: NumberLevel };
+
 type Props = {
-  letter: Letter;
+  level: Level;
   game: number;
-  mini3: Mini3;
+  mini3: Mini3 | NumMini3;
   round: number;
   /** > 0 saat mini-game ronde ini baru saja selesai: tampilkan centang besar. */
   flash: number;
@@ -43,9 +52,10 @@ function boardSize() {
 }
 
 export default function PlayScreen(p: Props) {
-  const { letter: L, game, mini3 } = p;
-  const lo = L.ch.toLowerCase();
-  const word = L.word === "Lio" ? "Lio" : L.word.toLowerCase();
+  const { level, game, mini3 } = p;
+  const L = level.kind === "huruf" ? level.letter : null;
+  const N = level.kind === "angka" ? level.num : null;
+  const color = L ? L.color : N!.color;
   const [size, setSize] = useState(320);
   const [strokes, setStrokes] = useState({ total: 0, done: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
@@ -62,34 +72,54 @@ export default function PlayScreen(p: Props) {
     return () => window.removeEventListener("resize", fit);
   }, []);
 
-  // Ikon langkah: pensil, kaca pembesar, lalu angka (hitung) atau bayangan hewan huruf ini (cocokkan bayangan).
-  const steps = [
-    <Emo key="a" name="pencil" />,
-    <Emo key="b" name="find" />,
-    mini3 === "count" ? <Emo key="c" name="count" /> : <img key="c" className="emo step-shadow" src={L.img} alt="" draggable={false} />,
-  ];
-  const title = [
-    `Tebalkan huruf ${L.ch}`,
-    `Ketuk semua ${L.ch} dan ${lo}!`,
-    mini3 === "count" ? `Hitung ${word}` : "Bayangan siapa ini?",
-  ][game];
+  // Teks per level: judul, ikon langkah, dan instruksi awal mini-game 2 dan 3 (mini-game 1 mengucapkannya sendiri).
+  let steps: ReactNode[], title: string, intro: string;
+  if (L) {
+    const lo = L.ch.toLowerCase();
+    const word = L.word === "Lio" ? "Lio" : L.word.toLowerCase();
+    // Ikon langkah: pensil, kaca pembesar, lalu angka (hitung) atau bayangan hewan huruf ini (cocokkan bayangan).
+    steps = [
+      <Emo key="a" name="pencil" />,
+      <Emo key="b" name="find" />,
+      mini3 === "count" ? <Emo key="c" name="count" /> : <img key="c" className="emo step-shadow" src={L.img} alt="" draggable={false} />,
+    ];
+    title = [`Tebalkan huruf ${L.ch}`, `Ketuk semua ${L.ch} dan ${lo}!`, mini3 === "count" ? `Hitung ${word}` : "Bayangan siapa ini?"][game];
+    intro = game === 1
+      ? `Cari dan ketuk semua huruf ${L.ch} besar dan ${lo} kecil! Ada empat.`
+      : mini3 === "count" ? `Ada berapa ${word}? Ketuk satu-satu untuk menghitung, lalu pilih angkanya.` : "Seret gambar yang cocok ke bayangannya!";
+  } else {
+    const fruit = N!.fruit.toLowerCase();
+    steps = [
+      <Emo key="a" name="pencil" />,
+      <Emo key="b" name="count" />,
+      <Emo key="c" name={mini3 === "match" ? "puzzle" : mini3 === "basket" ? "basket" : "find"} />,
+    ];
+    const t3 = { match: "Cocokkan jumlahnya", basket: `Ambilkan ${N!.n} ${fruit}`, findnum: `Ketuk semua angka ${N!.n}!` };
+    const i3 = {
+      match: "Seret tiap kartu angka ke kelompok buah yang sama banyak!",
+      basket: `Lio minta ${N!.n} ${fruit}. Seret ${fruit}nya ke keranjang satu per satu!`,
+      findnum: `Cari dan ketuk semua angka ${N!.n}! Ada tiga.`,
+    };
+    title = [`Tebalkan angka ${N!.n}`, `Hitung ${fruit}`, t3[mini3 as NumMini3] ?? ""][game];
+    intro = game === 1 ? `Ada berapa ${fruit}? Ketuk satu-satu untuk menghitung, lalu pilih angkanya.` : i3[mini3 as NumMini3] ?? "";
+  }
 
-  // Instruksi awal mini-game 2 dan 3 (mini-game 1 mengucapkannya sendiri).
   const { onSay, round } = p;
   useEffect(() => {
     if (said.current === round) return;
     said.current = round;
-    if (game === 1) onSay(`Cari dan ketuk semua huruf ${L.ch} besar dan ${lo} kecil! Ada empat.`);
-    if (game === 2)
-      onSay(mini3 === "count" ? `Ada berapa ${word}? Ketuk satu-satu untuk menghitung, lalu pilih angkanya.` : "Seret gambar yang cocok ke bayangannya!");
-  }, [round, game, mini3, L, lo, word, onSay]);
+    if (game > 0) onSay(intro);
+  }, [round, game, intro, onSay]);
 
-  const common = { letter: L, onDone: p.onGameDone, onSay: p.onSay, onPose: p.onPose, ask };
+  const common = { onDone: p.onGameDone, onSay: p.onSay, onPose: p.onPose, ask };
+  // Hewan/buah yang jalan di atas papan. Tidak tampil saat ada yang harus dihitung atau ditebak.
+  const critter = L ? (game < 2 ? { img: L.img, motion: L.motion } : null) : game === 0 ? { img: N!.img, motion: "float" as const } : null;
+  const glyph = L ? GLYPHS[L.ch] : { upper: NUM_GLYPHS[N!.n], lower: undefined };
 
   return (
     <section id="play" className="screen on">
       <Pop className="top" from={0.8}>
-        <button className="btn ghost icon-btn" id="btnBack" aria-label="Kembali ke Pilih Huruf" onClick={p.onBack}><Emo name="map" /></button>
+        <button className="btn ghost icon-btn" id="btnBack" aria-label={L ? "Kembali ke Pilih Huruf" : "Kembali ke Pilih Angka"} onClick={p.onBack}><Emo name="map" /></button>
         <div className="title" id="playTitle">{title}</div>
         <button className={`btn ghost icon-btn music-btn${p.musicOn ? "" : " off"}`} aria-label="Musik" onClick={p.onToggleMusic}>
           <Emo name={p.musicOn ? "music" : "mute"} />
@@ -117,12 +147,12 @@ export default function PlayScreen(p: Props) {
         id="card"
         style={{ ["--s" as string]: size + "px" }}
       >
-        {/* Hewan tidak tampil di mini-game 3 supaya tidak ikut terhitung / membocorkan bayangan */}
-        {game < 2 && <Critter key={`c${p.round}`} letter={L} pose={p.pose.name} n={p.pose.n} />}
+        {/* Hewan tidak tampil di mini-game 3 (buah angka: hanya saat menebalkan) supaya tidak ikut terhitung / membocorkan jawaban */}
+        {critter && <Critter key={`c${p.round}`} img={critter.img} motion={critter.motion} pose={p.pose.name} n={p.pose.n} />}
         {game === 0 ? (
           <Pop key={`t${p.round}-${tr.n}`} from={0.85}>
           <TraceBoard
-            key={`${p.round}-${tr.n}`} letter={L} size={size}
+            key={`${p.round}-${tr.n}`} upper={glyph.upper} lower={glyph.lower} kind={level.kind} color={color} size={size}
             ask={ask} startLower={tr.lower} onLower={() => setTrace({ ...tr, lower: true })}
             onDone={p.onGameDone} onSay={p.onSay} onPose={p.onPose}
             onOops={() => {
@@ -136,9 +166,15 @@ export default function PlayScreen(p: Props) {
           </Pop>
         ) : (
           <div className="quiz" id="quiz" style={{ width: size, height: size }}>
-            {game === 1 && <FindGame key={p.round} {...common} />}
-            {game === 2 && mini3 === "count" && <CountGame key={p.round} {...common} />}
-            {game === 2 && mini3 === "shadow" && <ShadowGame key={p.round} {...common} />}
+            {L && game === 1 && <FindGame key={p.round} letter={L} {...common} />}
+            {L && game === 2 && mini3 === "count" && (
+              <CountGame key={p.round} img={L.img} word={L.word === "Lio" ? "Lio" : L.word.toLowerCase()} {...common} />
+            )}
+            {L && game === 2 && mini3 === "shadow" && <ShadowGame key={p.round} letter={L} {...common} />}
+            {N && game === 1 && <CountGame key={p.round} img={N.img} word={N.fruit.toLowerCase()} n={N.n} {...common} />}
+            {N && game === 2 && mini3 === "match" && <MatchCountGame key={p.round} num={N} {...common} />}
+            {N && game === 2 && mini3 === "basket" && <BasketGame key={p.round} num={N} {...common} />}
+            {N && game === 2 && mini3 === "findnum" && <FindNumberGame key={p.round} num={N} {...common} />}
           </div>
         )}
         {p.flash > 0 && (
@@ -155,7 +191,7 @@ export default function PlayScreen(p: Props) {
       </Pop>
       <div className="dots" id="dots" style={{ visibility: game === 0 ? "visible" : "hidden" }}>
         {Array.from({ length: strokes.total }, (_, i) => (
-          <div key={i} className={`dot${i < strokes.done ? " done" : ""}`} style={i < strokes.done ? { background: L.color } : undefined} />
+          <div key={i} className={`dot${i < strokes.done ? " done" : ""}`} style={i < strokes.done ? { background: color } : undefined} />
         ))}
       </div>
       <Pop className="talk" delay={0.3} from={0.7}>
@@ -168,7 +204,7 @@ export default function PlayScreen(p: Props) {
         <button
           className="btn ghost icon-btn retry-btn" id="btnRetry" aria-label="Ulangi"
           onClick={() => {
-            if (game === 0 && tr.lower) { setTrace({ ...tr, n: tr.n + 1 }); p.onPose("menunjuk"); }
+            if (game === 0 && tr.lower && L) { setTrace({ ...tr, n: tr.n + 1 }); p.onPose("menunjuk"); }
             else p.onRetry();
           }}
         >

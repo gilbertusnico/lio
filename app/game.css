@@ -390,3 +390,62 @@ html, body { overscroll-behavior: none; position: fixed; inset: 0; width: 100%; 
 .nt-num { font-weight: 700; font-size: min(13cqw, 11cqh); line-height: 1; text-shadow: 0 3px 0 rgba(0,0,0,.16); }
 .nt-fruit { height: 64%; width: auto; aspect-ratio: 1; filter: drop-shadow(0 3px 2px rgba(0,0,0,.22)); }
 .numtile .badge { position: absolute; top: -9px; right: -7px; width: 28px; height: 28px; }
+
+/* ===== Petualangan Angka: mini-game ===== */
+/* Hitung benda sampai 10: gambar lebih kecil supaya 10 buah muat tanpa berdesakan */
+.qitems.many { gap: calc(var(--s) * .01); }
+.qitems.many .qitem { padding: 2px; }
+.qitems.many .qitem img { width: calc(var(--s) * .155); height: calc(var(--s) * .155); }
+
+/* Kartu pembuka angka: buah sebanyak angkanya (dua baris kalau lebih dari 5) */
+.intro-fruits { display: grid; grid-template-columns: repeat(var(--cols, 5), auto); justify-content: center; gap: 4px; margin: 2px auto 4px; }
+.intro-fruits:not(.two) { --cols: 10; }
+.intro-fruits img { width: clamp(30px, 9vw, 42px); height: clamp(30px, 9vw, 42px); object-fit: contain; display: block; }
+
+/* Titik sebanyak angka (bingkai sepuluh mini): satu baris sampai 5, dua baris 6–10 */
+.ndots { display: grid; grid-template-columns: repeat(5, auto); gap: calc(var(--s) * .008); justify-content: center; margin-top: calc(var(--s) * .01); }
+.ndots i { width: calc(var(--s) * .028); height: calc(var(--s) * .028); border-radius: 50%; background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.18); }
+.qb.qnum { flex-direction: column; position: relative; }
+.qb.qnum .qn { line-height: 1; }
+.qb.qnum.found .qn { font-size: .78em; }
+
+/* Cocokkan jumlah: tiga baris (bingkai sepuluh + slot kartu) dan tiga kartu angka di bawah */
+.match { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: calc(var(--s) * .025); }
+.match-row { display: flex; align-items: center; justify-content: center; gap: calc(var(--s) * .03); padding: calc(var(--s) * .012); border-radius: 18px;
+  transition: background .2s, box-shadow .2s; }
+.match-row.waiting { box-shadow: inset 0 0 0 3px rgba(255,201,60,.45); }
+.match-row.over { background: #fff3c7; box-shadow: inset 0 0 0 4px #ffc93c; }
+.match-row.ok { background: #effbea; }
+.tframe { display: grid; grid-template-columns: repeat(5, calc(var(--s) * .088)); grid-auto-rows: calc(var(--s) * .088); gap: 2px;
+  background: #cfd8e3; border: 2px solid #cfd8e3; border-radius: 10px; overflow: hidden; }
+.tcell { background: #fff; display: flex; align-items: center; justify-content: center; }
+.tcell img { width: 84%; height: 84%; object-fit: contain; pointer-events: none; }
+.match-slot { width: calc(var(--s) * .17); height: calc(var(--s) * .17); border-radius: 18px; border: 3px dashed #c3cbd8; display: flex;
+  align-items: center; justify-content: center; font: 800 calc(var(--s) * .1) var(--font-letter); color: var(--ink); }
+.match-row.ok .match-slot { border-style: solid; border-color: transparent; animation: foundPop .4s cubic-bezier(.2,1.6,.4,1); }
+.match-cards { gap: calc(var(--s) * .06); }
+.qopt.shadow-opt.match-card { width: calc(var(--s) * .19); height: calc(var(--s) * .19); padding: 0; font: 800 calc(var(--s) * .11) var(--font-letter); color: var(--ink); }
+.match-card span { display: block; pointer-events: none; }
+.match-card span.nope { animation: shake .4s; }
+
+/* Ambilkan N: tumpukan buah di atas, keranjang Lio di bawah */
+.pile { flex: 1; min-height: 0; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: calc(var(--s) * .015); padding: 0 calc(var(--s) * .03); }
+.pile-item { border: 0; background: none; padding: 2px; cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; display: block; }
+.pile-item img { width: calc(var(--s) * .16); height: calc(var(--s) * .16); object-fit: contain; pointer-events: none; display: block; }
+.pile.many .pile-item img { width: calc(var(--s) * .135); height: calc(var(--s) * .135); }
+.pile-item.used { visibility: hidden; }
+.shadow-slot.lifting .pile-item { filter: drop-shadow(0 10px 8px rgba(29,74,43,.3)); }
+.basket { position: relative; flex: none; height: calc(var(--s) * .36); margin: 0 auto calc(var(--s) * .01); width: 78%; border-radius: 22px;
+  display: flex; align-items: flex-end; justify-content: center; transition: background .2s, box-shadow .2s; }
+.basket.waiting { box-shadow: inset 0 0 0 3px rgba(255,201,60,.5); }
+.basket.over { background: radial-gradient(circle at 50% 70%, #ffe9a3 0%, #fff7dc 75%); box-shadow: inset 0 0 0 4px #ffc93c; }
+.basket-img { width: calc(var(--s) * .3); height: calc(var(--s) * .3); object-fit: contain; position: relative; z-index: 3; pointer-events: none; }
+.basket-img.bump { animation: basketBump .35s ease-out; }
+@keyframes basketBump { 0% { transform: scale(1); } 40% { transform: scale(1.1, .92); } 100% { transform: scale(1); } }
+/* Buah yang sudah masuk: bertumpuk menyembul di atas mulut keranjang */
+.basket-in { position: absolute; left: 50%; bottom: calc(var(--s) * .215); transform: translateX(-50%); z-index: 2; display: flex; flex-wrap: wrap-reverse;
+  justify-content: center; width: calc(var(--s) * .34); pointer-events: none; }
+.basket-in img { width: calc(var(--s) * .09); height: calc(var(--s) * .09); object-fit: contain; margin: calc(var(--s) * -.022) calc(var(--s) * -.008); }
+.basket-n { position: absolute; right: 8%; top: 12%; min-width: calc(var(--s) * .13); height: calc(var(--s) * .13); border-radius: 999px; color: #fff;
+  font: 800 calc(var(--s) * .085) / calc(var(--s) * .13) var(--font-letter); text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,.15); z-index: 4;
+  animation: foundPop .35s cubic-bezier(.2,1.6,.4,1); }

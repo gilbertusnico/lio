@@ -3,23 +3,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { LETTERS } from "@/data/letters";
+import { NUMBERS } from "@/data/numbers";
 import { FREE_LETTERS, PAYWALL_ENABLED } from "@/lib/config";
 import { audio, musicPref, setMusicPref, sfx, startMusic, stopMusic } from "@/lib/audio";
 import {
-  emptyNumProgress, emptyProgress, loadNumProgress, loadProgress, pickMini3, saveNumProgress, saveProgress,
-  type Mini3, type NumProgress, type Progress,
+  emptyNumProgress, emptyProgress, loadNumProgress, loadProgress, pickMini3, pickNumMini3, saveNumProgress, saveProgress,
+  type Mini3, type NumMini3, type NumProgress, type Progress,
 } from "@/lib/progress";
 import Cover from "./Cover";
 import LessonMenu from "./LessonMenu";
 import LetterMap from "./LetterMap";
 import NumberMap from "./NumberMap";
-import PlayScreen from "./PlayScreen";
+import PlayScreen, { type Level } from "./PlayScreen";
 import Leaves from "./Leaves";
 import Fx, { type FxHandle } from "./Fx";
 import Paywall from "./Paywall";
 import Album from "./Album";
 import Icon from "./Icon";
 import Emo from "./Emo";
+import Pop from "./Pop";
 import { poke } from "@/lib/poke";
 import { LIO_POSES, lioSrc, type PoseName } from "./Lio";
 
@@ -28,12 +30,16 @@ const PRAISE = ["Bagus!", "Pintar!", "Hebat!", "Keren!"];
 const praise = () => PRAISE[Math.floor(Math.random() * PRAISE.length)];
 const fade = { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.2 } };
 
-/** Mesin layar: Cover → Pilih Pelajaran (Huruf / Angka) → Pilih Huruf → (kartu pembuka) → 3 mini-game → layar menang. */
+/**
+ * Mesin layar: Cover → Pilih Pelajaran (Huruf / Angka) → Pilih Huruf / Pilih Angka → (kartu pembuka)
+ * → 3 mini-game → layar menang. `lesson` menentukan apakah `cur` menunjuk ke LETTERS atau NUMBERS.
+ */
 export default function Game() {
   const [screen, setScreen] = useState<Screen>("start");
+  const [lesson, setLesson] = useState<"huruf" | "angka">("huruf");
   const [cur, setCur] = useState(0);
   const [game, setGame] = useState(0);
-  const [mini3, setMini3] = useState<Mini3>("count");
+  const [mini3, setMini3] = useState<Mini3 | NumMini3>("count");
   const [round, setRound] = useState(0); // naik tiap mini-game dimulai/diulang → komponen dibuat baru
   const [intro, setIntro] = useState(false);
   const [win, setWin] = useState(false);
@@ -56,9 +62,15 @@ export default function Game() {
   const pending = useRef<null | (() => void)>(null);
   const albumBtn = useRef<HTMLButtonElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const L = LETTERS[cur];
+  const isNum = lesson === "angka";
+  const L = LETTERS[isNum ? 0 : cur];
+  const N = NUMBERS[isNum ? cur : 0];
+  const level: Level = isNum ? { kind: "angka", num: N } : { kind: "huruf", letter: L };
   const stickerCount = LETTERS.filter((l) => progress.done[l.ch]).length;
-  const allDone = stickerCount === LETTERS.length;
+  const numCount = NUMBERS.filter((l) => numProgress.done[l.n]).length;
+  const allDone = isNum ? numCount === NUMBERS.length : stickerCount === LETTERS.length;
+  /** Gambar dan nama stiker level ini: hewan (huruf) atau buah (angka). */
+  const sticker = isNum ? { img: N.img, name: N.fruit } : { img: L.img, name: L.word };
 
   // localStorage baru bisa dibaca setelah halaman statis dihidupkan di browser.
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -72,14 +84,14 @@ export default function Game() {
 
   // Stiker baru: muncul di samping Lio, lalu terbang ke ikon album di pojok kanan atas.
   useEffect(() => {
-    if (!win || !newSticker) return;
+    if (!win || !newSticker || isNum) return; // album angka belum ada (tahap 4): stiker buah tidak terbang
     const t = setTimeout(() => {
       const a = stickerImg.current?.getBoundingClientRect();
       const b = albumBtn.current?.getBoundingClientRect();
       if (a && b) { setFly({ from: a, to: b }); sfx.whoosh(); }
     }, 1700);
     return () => clearTimeout(t);
-  }, [win, newSticker]);
+  }, [win, newSticker, isNum]);
   useEffect(() => { leavingRef.current = leaving; });
 
   // ---- Anti kepencet (butir 10) ----
@@ -109,7 +121,7 @@ export default function Game() {
     // tidak ikut, karena sudah punya bunyinya sendiri.
     const tapSound = (e: Event) => {
       const b = (e.target as Element | null)?.closest?.("button");
-      if (b && !b.matches(".qb, .qitem, .qopt, .sticker, .shadow-opt, :disabled")) { audio(); sfx.tap(); }
+      if (b && !b.matches(".qb, .qitem, .qopt, .sticker, .shadow-opt, .pile-item, :disabled")) { audio(); sfx.tap(); }
     };
     document.addEventListener("click", tapSound, true);
     window.addEventListener("popstate", onPop);
@@ -155,12 +167,25 @@ export default function Game() {
     audio();
     if (PAYWALL_ENABLED && i >= FREE_LETTERS) return setPay("locked");
     clearTimer();
+    setLesson("huruf");
     setCur(i);
     setMini3(pickMini3(progress.last3[LETTERS[i].ch]));
     setWin(false);
     resetSticker();
     setIntro(true);
     setTimeout(() => sfx.appear(), 120); // kartu pembuka muncul
+  }
+
+  function startNumber(i: number) {
+    audio();
+    clearTimer();
+    setLesson("angka");
+    setCur(i);
+    setMini3(pickNumMini3(numProgress.last3[NUMBERS[i].n]));
+    setWin(false);
+    resetSticker();
+    setIntro(true);
+    setTimeout(() => sfx.appear(), 120);
   }
 
   function startGame(g: number) {
@@ -182,12 +207,20 @@ export default function Game() {
   }
 
   function levelDone() {
-    const next: Progress = { done: { ...progress.done, [L.ch]: true }, last3: { ...progress.last3, [L.ch]: mini3 } };
-    setNewSticker(!progress.done[L.ch]);
+    if (isNum) {
+      const k = String(N.n);
+      const next: NumProgress = { done: { ...numProgress.done, [k]: true }, last3: { ...numProgress.last3, [k]: mini3 as NumMini3 } };
+      setNewSticker(!numProgress.done[k]);
+      setNumProgress(next);
+      saveNumProgress(next);
+    } else {
+      const next: Progress = { done: { ...progress.done, [L.ch]: true }, last3: { ...progress.last3, [L.ch]: mini3 as Mini3 } };
+      setNewSticker(!progress.done[L.ch]);
+      setProgress(next);
+      saveProgress(next);
+    }
     setLanded(false);
     setFly(null);
-    setProgress(next);
-    saveProgress(next);
     // Beri waktu centangnya terlihat, baru layar menang dengan fanfare dan konfeti.
     after(() => { sfx.win(); sfx.stars(); fx.current?.confetti(); setWin(true); }, 1150);
   }
@@ -198,7 +231,7 @@ export default function Game() {
     resetSticker();
     setIntro(false);
     setLeaving(false);
-    setScreen("map");
+    setScreen(lesson === "angka" ? "nummap" : "map");
   }
 
   function resetProgress() {
@@ -233,7 +266,7 @@ export default function Game() {
         )}
         {screen === "nummap" && (
           <motion.div key="nummap" {...fade}>
-            <NumberMap progress={numProgress} />
+            <NumberMap progress={numProgress} onPick={startNumber} />
           </motion.div>
         )}
         {screen === "map" && (
@@ -244,7 +277,7 @@ export default function Game() {
         {screen === "play" && (
           <motion.div key="play" {...fade}>
             <PlayScreen
-              letter={L} game={game} mini3={mini3} round={round} flash={flash.round === round ? flash.n : 0}
+              level={level} game={game} mini3={mini3} round={round} flash={flash.round === round ? flash.n : 0}
               bubble={bubble} pose={pose} musicOn={musicOn}
               onSay={say} onPose={setPose} onGameDone={gameDone}
               onBack={() => setLeaving(true)} onRetry={() => startGame(game)} onJump={(g) => { if (g < game) startGame(g); }} onToggleMusic={toggleMusic}
@@ -259,13 +292,25 @@ export default function Game() {
           <motion.div key="intro" className="overlay on" id="intro" {...fade}>
             <div className="panel">
               <div className="intro-row">
-                <div className="intro-letter" style={{ color: L.color }}>{L.ch} {L.ch.toLowerCase()}</div>
+                <div className="intro-letter" style={{ color: isNum ? N.color : L.color }}>{isNum ? N.n : `${L.ch} ${L.ch.toLowerCase()}`}</div>
                 <img
-                  className="big-emoji pokeable" src={L.img} alt={L.word} draggable={false}
+                  className="big-emoji pokeable" src={sticker.img} alt={sticker.name} draggable={false}
                   onPointerDown={(e) => { audio(); sfx.pop(); poke(e.currentTarget, "poke"); }}
                 />
               </div>
-              <h3 className="intro-word">{L.ch} untuk {L.word}</h3>
+              <h3 className="intro-word">{isNum ? N.word : `${L.ch} untuk ${L.word}`}</h3>
+              {isNum && (
+                <div className={`intro-fruits${N.n > 5 ? " two" : ""}`} aria-label={`${N.n} ${N.fruit}`}>
+                  {Array.from({ length: N.n }, (_, i) => (
+                    <Pop key={i} i={i} step={0.06} delay={0.25}>
+                      <img
+                        className="pokeable" src={N.img} alt="" draggable={false}
+                        onPointerDown={(e) => { audio(); sfx.step(i); poke(e.currentTarget, "poke"); }}
+                      />
+                    </Pop>
+                  ))}
+                </div>
+              )}
               <div className="row" style={{ justifyContent: "center", marginTop: 12 }}>
                 <button className="btn ghost" id="introBack" onClick={goMap} aria-label="Kembali"><Icon name="back" /></button>
                 <button className="btn green" id="introGo" onClick={() => { audio(); setIntro(false); startGame(0); }}>Mulai <Icon name="play" /></button>
@@ -298,7 +343,7 @@ export default function Game() {
             <Leaves />
             {fly && (
               <motion.img
-                className="fly-sticker" src={L.img} alt="" draggable={false}
+                className="fly-sticker" src={sticker.img} alt="" draggable={false}
                 style={{ left: fly.from.left, top: fly.from.top, width: fly.from.width, height: fly.from.height }}
                 initial={{ x: 0, y: 0, scale: 1, rotate: -8, opacity: 1 }}
                 animate={{
@@ -310,12 +355,14 @@ export default function Game() {
                 onAnimationComplete={() => { setFly(null); setLanded(true); sfx.pop(); }}
               />
             )}
-            <button
-              ref={albumBtn} className={`album-chip win-album${landed ? " bump" : ""}`} id="winAlbum"
-              onClick={() => { audio(); setAlbum(true); }} aria-label="Buka album stiker"
-            >
-              <img src="/ui/album.webp" alt="" draggable={false} /> <b>{stickerCount - (newSticker && !landed ? 1 : 0)}</b>
-            </button>
+            {!isNum && (
+              <button
+                ref={albumBtn} className={`album-chip win-album${landed ? " bump" : ""}`} id="winAlbum"
+                onClick={() => { audio(); setAlbum(true); }} aria-label="Buka album stiker"
+              >
+                <img src="/ui/album.webp" alt="" draggable={false} /> <b>{stickerCount - (newSticker && !landed ? 1 : 0)}</b>
+              </button>
+            )}
             <button className={`btn ghost icon-btn music-btn win-music${musicOn ? "" : " off"}`} aria-label="Musik" onClick={toggleMusic}>
               <Emo name={musicOn ? "music" : "mute"} />
             </button>
@@ -331,12 +378,14 @@ export default function Game() {
                     animate={{ scale: 1, rotate: -8, opacity: 1 }}
                     transition={{ type: "spring", stiffness: 380, damping: 14, delay: 0.55 }}
                   >
-                    <img ref={stickerImg} src={L.img} alt={L.word} draggable={false} />
+                    <img ref={stickerImg} src={sticker.img} alt={sticker.name} draggable={false} />
                     <span>Stiker baru!</span>
                   </motion.div>
                 )}
               </div>
-              <h3 id="winText">{allDone ? "Hebat! Semua huruf selesai!" : `Huruf ${L.ch} selesai!`}</h3>
+              <h3 id="winText">
+                {allDone ? `Hebat! Semua ${isNum ? "angka" : "huruf"} selesai!` : isNum ? `Angka ${N.n} selesai!` : `Huruf ${L.ch} selesai!`}
+              </h3>
               <div className="stars">
                 {[0, 1, 2].map((i) => (
                   <span key={i} className="pokeable" onPointerDown={(e) => { audio(); sfx.ding(); poke(e.currentTarget, "poke-spin", 500); }}>
@@ -345,10 +394,16 @@ export default function Game() {
                 ))}
               </div>
               <div className="row" style={{ justifyContent: "center", marginTop: 16 }}>
-                <button className="btn ghost" id="winRetry" onClick={() => { setWin(false); resetSticker(); setMini3(pickMini3(mini3)); startGame(0); }}><Icon name="retry" /> Lagi</button>
+                <button className="btn ghost" id="winRetry" onClick={() => { setWin(false); resetSticker(); setMini3(isNum ? pickNumMini3(mini3 as NumMini3) : pickMini3(mini3 as Mini3)); startGame(0); }}><Icon name="retry" /> Lagi</button>
                 <button
                   className="btn green" id="winNext"
                   onClick={() => {
+                    if (isNum) {
+                      // Album angka menyusul di tahap 4; untuk sekarang semua angka selesai = kembali ke Pilih Angka.
+                      if (!allDone && cur < NUMBERS.length - 1) startNumber(cur + 1);
+                      else goMap();
+                      return;
+                    }
                     if (PAYWALL_ENABLED && cur + 1 >= FREE_LETTERS) { setWin(false); setScreen("map"); setPay("win"); }
                     else if (allDone) { goMap(); setAlbum(true); } // semua stiker terkumpul: tunjukkan albumnya
                     else if (cur < LETTERS.length - 1) startLetter(cur + 1);
